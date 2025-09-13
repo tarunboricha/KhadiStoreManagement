@@ -1,0 +1,405 @@
+﻿@model IEnumerable<KhadiStore.Application.DTOs.SaleDto>
+@{
+    ViewData["Title"] = "Sales";
+}
+
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="page-title">
+            <i class="fas fa-cash-register me-2"></i>
+            Sales Management
+        </h1>
+    </div>
+    <div class="col-auto">
+        <a href="@Url.Action("Create")" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-1"></i> New Sale
+        </a>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+@{
+    var totalSales = Model.Sum(s => s.TotalAmount);
+    var totalOrders = Model.Count();
+    var avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+    var todaysSales = Model.Where(s => s.SaleDate.Date == DateTime.Today).Sum(s => s.TotalAmount);
+}
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-rupee-sign fa-2x text-success mb-2"></i>
+                <h4 class="text-success">₹@totalSales.ToString("N0")</h4>
+                <p class="mb-0">Total Sales</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-shopping-cart fa-2x text-primary mb-2"></i>
+                <h4 class="text-primary">@totalOrders</h4>
+                <p class="mb-0">Total Orders</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                <h4 class="text-info">₹@avgOrderValue.ToString("N0")</h4>
+                <p class="mb-0">Avg Order Value</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-calendar-day fa-2x text-warning mb-2"></i>
+                <h4 class="text-warning">₹@todaysSales.ToString("N0")</h4>
+                <p class="mb-0">Today's Sales</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">From Date</label>
+                <input type="date" class="form-control" name="startDate" value="@ViewBag.StartDate?.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">To Date</label>
+                <input type="date" class="form-control" name="endDate" value="@ViewBag.EndDate?.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Payment Method</label>
+                <select class="form-select" name="paymentMethod">
+                    <option value="">All Methods</option>
+                    <option value="Cash" selected="@(ViewBag.PaymentMethod == KhadiStore.Domain.Entities.PaymentMethod.Cash)">Cash</option>
+                    <option value="Card" selected="@(ViewBag.PaymentMethod == KhadiStore.Domain.Entities.PaymentMethod.Card)">Card</option>
+                    <option value="UPI" selected="@(ViewBag.PaymentMethod == KhadiStore.Domain.Entities.PaymentMethod.UPI)">UPI</option>
+                    <option value="NetBanking" selected="@(ViewBag.PaymentMethod == KhadiStore.Domain.Entities.PaymentMethod.NetBanking)">Net Banking</option>
+                    <option value="Cheque" selected="@(ViewBag.PaymentMethod == KhadiStore.Domain.Entities.PaymentMethod.Cheque)">Cheque</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+                    <option value="">All Status</option>
+                    <option value="Completed" selected="@(ViewBag.Status == "Completed")">Completed</option>
+                    <option value="Pending" selected="@(ViewBag.Status == "Pending")">Pending</option>
+                    <option value="Cancelled" selected="@(ViewBag.Status == "Cancelled")">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2 w-100">
+                    <i class="fas fa-search me-1"></i> Filter
+                </button>
+            </div>
+        </form>
+        <div class="row mt-2">
+            <div class="col-md-8">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('today')">Today</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('week')">This Week</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('month')">This Month</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('clear')">Clear</button>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-times me-1"></i> Clear All Filters
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="fas fa-receipt me-2"></i>
+                Sales History (@Model.Count() records)
+            </h5>
+            <div>
+                <button class="btn btn-outline-success btn-sm" onclick="exportToCSV()">
+                    <i class="fas fa-download me-1"></i> Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="salesTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%">Invoice</th>
+                            <th style="width: 20%">Customer</th>
+                            <th style="width: 15%">Date & Time</th>
+                            <th class="text-center" style="width: 8%">Items</th>
+                            <th class="text-end" style="width: 12%">Amount</th>
+                            <th class="text-center" style="width: 10%">Payment</th>
+                            <th class="text-center" style="width: 8%">Status</th>
+                            <th class="text-center" style="width: 12%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var sale in Model.OrderByDescending(s => s.SaleDate))
+                        {
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>@sale.InvoiceNumber</strong>
+                                        <br>
+                                        <small class="text-muted">#@sale.Id</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(sale.CustomerName))
+                                    {
+                                        <div>
+                                            <strong>@sale.CustomerName</strong>
+                                            @if (!string.IsNullOrEmpty(sale.CustomerPhone))
+                                            {
+                                                <br>
+                                
+                                                <small class="text-muted">@sale.CustomerPhone</small>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Walk-in Customer</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div>
+                                        @sale.SaleDate.ToString("dd MMM yyyy")
+                                        <br>
+                                        <small class="text-muted">@sale.SaleDate.ToString("hh:mm tt")</small>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark">@sale.TotalItems</span>
+                                </td>
+                                <td class="text-end">
+                                    <div>
+                                        <strong class="text-success">₹@sale.TotalAmount.ToString("N2")</strong>
+                                        @if (sale.DiscountAmount > 0)
+                                        {
+                                            <br>
+                                
+                                            <small class="text-danger">-₹@sale.DiscountAmount.ToString("N0") disc</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    @switch (sale.PaymentMethod)
+                                    {
+                                        case "Cash":
+                                            <span class="badge bg-success"><i class="fas fa-money-bill-wave"></i> Cash</span>
+                                            break;
+                                        case "Card":
+                                            <span class="badge bg-primary"><i class="fas fa-credit-card"></i> Card</span>
+                                            break;
+                                        case "UPI":
+                                            <span class="badge bg-info"><i class="fas fa-mobile-alt"></i> UPI</span>
+                                            break;
+                                        case "NetBanking":
+                                            <span class="badge bg-secondary"><i class="fas fa-university"></i> Bank</span>
+                                            break;
+                                        case "Cheque":
+                                            <span class="badge bg-warning text-dark"><i class="fas fa-money-check"></i> Cheque</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-light text-dark">@sale.PaymentMethod</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @switch (sale.Status)
+                                    {
+                                        case "Completed":
+                                            <span class="badge bg-success">Completed</span>
+                                            break;
+                                        case "Pending":
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                            break;
+                                        case "Cancelled":
+                                            <span class="badge bg-danger">Cancelled</span>
+                                            break;
+                                        case "Returned":
+                                            <span class="badge bg-secondary">Returned</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-light text-dark">@sale.Status</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="@Url.Action("Details", new { id = sale.Id })"
+                                           class="btn btn-outline-primary"
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="@Url.Action("Invoice", new { id = sale.Id })"
+                                           class="btn btn-outline-success"
+                                           title="Print Invoice"
+                                           target="_blank">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                        @if (sale.Status == "Completed")
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-outline-warning"
+                                                    onclick="duplicateSale(@sale.Id)"
+                                                    title="Duplicate Sale">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-5 text-center text-muted">
+                <i class="fas fa-receipt fa-3x mb-3"></i>
+                <h5>No Sales Found</h5>
+                <p>No sales match your current filters, or no sales have been made yet.</p>
+                <a href="@Url.Action("Create")" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Create First Sale
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <!-- Summary Cards -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Payment Method Breakdown</h6>
+                </div>
+                <div class="card-body">
+                    @{
+                        var paymentGroups = Model.GroupBy(s => s.PaymentMethod).Select(g => new { Method = g.Key, Count = g.Count(), Amount = g.Sum(s => s.TotalAmount) });
+                    }
+                    @foreach (var group in paymentGroups.OrderByDescending(g => g.Amount))
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>@group.Method (@group.Count orders)</span>
+                            <strong>₹@group.Amount.ToString("N0")</strong>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Sales Insights</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Highest Sale</span>
+                        <strong>₹@Model.Max(s => s.TotalAmount).ToString("N0")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Lowest Sale</span>
+                        <strong>₹@Model.Min(s => s.TotalAmount).ToString("N0")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Total Items Sold</span>
+                        <strong>@Model.Sum(s => s.TotalItems)</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Total Discount Given</span>
+                        <strong class="text-danger">₹@Model.Sum(s => s.DiscountAmount).ToString("N0")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function setDateRange(range) {
+            const today = new Date();
+            let startDate, endDate;
+
+            switch(range) {
+                case 'today':
+                    startDate = endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'week':
+                    const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+                    startDate = weekStart.toISOString().split('T')[0];
+                    endDate = new Date().toISOString().split('T')[0];
+                    break;
+                case 'month':
+                    startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                    endDate = new Date().toISOString().split('T')[0];
+                    break;
+                case 'clear':
+                    startDate = endDate = '';
+                    break;
+            }
+
+            $('input[name="startDate"]').val(startDate);
+            $('input[name="endDate"]').val(endDate);
+        }
+
+        function exportToCSV() {
+            let csv = 'Invoice Number,Customer Name,Customer Phone,Sale Date,Total Items,Total Amount,Payment Method,Status\n';
+
+            $('#salesTable tbody tr').each(function() {
+                const row = $(this);
+                const invoice = row.find('td:eq(0) strong').text();
+                const customer = row.find('td:eq(1) strong').text() || 'Walk-in Customer';
+                const phone = row.find('td:eq(1) small').text() || '';
+                const date = row.find('td:eq(2)').text().replace(/\s+/g, ' ').trim();
+                const items = row.find('td:eq(3) .badge').text();
+                const amount = row.find('td:eq(4) strong').text().replace('₹', '').replace(/,/g, '');
+                const payment = row.find('td:eq(5) .badge').text().replace(/\s+/g, ' ').trim();
+                const status = row.find('td:eq(6) .badge').text();
+
+                csv += `"${invoice}","${customer}","${phone}","${date}","${items}","${amount}","${payment}","${status}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `sales-export-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function duplicateSale(saleId) {
+            if (confirm('Create a new sale based on this sale?')) {
+                window.location.href = `@Url.Action("Create")?duplicateFromSale=${saleId}`;
+            }
+        }
+    </script>
+}

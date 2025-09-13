@@ -1,0 +1,685 @@
+﻿@using KhadiStore.Domain.Entities
+@model KhadiStore.Application.DTOs.ReturnDto
+@{
+    Layout = null;
+    var storeName = "खादी भारत स्टोर";
+    var storeNameEng = "Khadi Bharat Store";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Return Receipt - @Model.ReturnNumber</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @@media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                margin: 0;
+                font-size: 13px;
+            }
+
+            .container {
+                max-width: none !important;
+            }
+        }
+
+        body {
+            font-size: 14px;
+            line-height: 1.4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .return-header {
+            border-bottom: 4px solid #28a745;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(255, 193, 7, 0.1) 100%);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .brand {
+            color: #000080;
+            font-weight: 800;
+            font-size: 2.2rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            letter-spacing: -0.5px;
+        }
+
+        .brand-english {
+            color: #FF6B35;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 0.25rem;
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            font-weight: 600;
+            border: none !important;
+        }
+
+        .table td {
+            border-color: #dee2e6 !important;
+            vertical-align: middle;
+        }
+
+        .return-stamp {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            transform: rotate(-12deg);
+            border: 3px solid #28a745;
+            color: #28a745;
+            padding: 8px 16px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 5rem;
+            color: rgba(40, 167, 69, 0.04);
+            z-index: -1;
+            font-weight: bold;
+            font-family: serif;
+        }
+
+        .receipt-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .info-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .info-card-header {
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .info-card-body {
+            padding: 1rem;
+            background: #f8f9fa;
+        }
+
+        .amount-box {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .total-highlight {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+        }
+
+        .receipt-footer {
+            border-top: 2px solid #28a745;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 0 0 8px 8px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.375rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .khadi-pattern {
+            background-image: repeating-linear-gradient( 45deg, transparent, transparent 10px, rgba(40, 167, 69, 0.1) 10px, rgba(40, 167, 69, 0.1) 20px );
+        }
+
+        .success-banner {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="watermark">RETURN COMPLETED<br>रिटर्न पूर्ण</div>
+    <div class="return-stamp no-print">REFUND COMPLETED</div>
+
+    <div class="container my-4">
+        <!-- Print Controls -->
+        <div class="no-print mb-4 text-center">
+            <div class="btn-group btn-group-lg">
+                <button onclick="window.print()" class="btn btn-success">
+                    <i class="fas fa-print me-2"></i> Print Return Receipt
+                </button>
+                <a href="@Url.Action("Details", new { id = Model.Id })" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i> Back to Details
+                </a>
+            </div>
+        </div>
+
+        <!-- Header Section -->
+        <div class="return-header khadi-pattern">
+            <div class="row align-items-center">
+                <div class="col-md-7">
+                    <div class="brand">@storeName</div>
+                    <div class="brand-english">@storeNameEng</div>
+                    <div class="mt-2">
+                        <span class="badge bg-success fs-6 px-3 py-2">
+                            <i class="fas fa-check-double me-2"></i>Return/Refund Receipt | रिटर्न/रिफंड रसीद
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-5 text-md-end">
+                    <div class="info-card">
+                        <div class="info-card-header bg-success text-white">
+                            <i class="fas fa-receipt me-2"></i>RETURN RECEIPT
+                        </div>
+                        <div class="info-card-body text-center">
+                            <div class="mb-2">
+                                <div class="h4 text-success mb-1">@Model.ReturnNumber</div>
+                                <small class="text-muted">Return ID: #@Model.Id</small>
+                            </div>
+                            <hr class="my-2">
+                            <div>
+                                <strong>Date:</strong> @Model.ReturnDate.ToString("dd MMM yyyy")<br>
+                                <strong>Time:</strong> @Model.ReturnDate.ToString("hh:mm tt")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Banner -->
+        <div class="success-banner">
+            <div class="d-flex align-items-center justify-content-center">
+                <i class="fas fa-check-circle fa-3x me-3 text-success"></i>
+                <div class="text-center">
+                    <h5 class="text-success mb-1">✅ Return Processed Successfully</h5>
+                    <small class="text-muted">The refund of <strong>₹@Model.TotalAmount.ToString("N2")</strong> has been completed via <strong>@Model.RefundMethod</strong>.</small><br>
+                    <small class="text-muted">Inventory has been updated and items restored to stock.</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer & Sale Information -->
+        <div class="receipt-section">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="info-card h-100">
+                        <div class="info-card-header bg-primary text-white">
+                            <i class="fas fa-user me-2"></i>Customer Information | ग्राहक जानकारी
+                        </div>
+                        <div class="info-card-body">
+                            @if (!string.IsNullOrWhiteSpace(Model.CustomerName))
+                            {
+                                <div class="mb-2">
+                                    <strong class="text-primary">@Model.CustomerName</strong>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(Model.CustomerPhone))
+                                {
+                                    <div class="text-muted">
+                                        <i class="fas fa-phone me-1"></i> @Model.CustomerPhone
+                                    </div>
+                                }
+                                <div class="text-muted small mt-1">
+                                    Customer ID: @(Model.CustomerId?.ToString() ?? "N/A")
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-user-times fa-2x mb-2 d-block"></i>
+                                    <strong>Walk-in Customer</strong><br>
+                                    <small>No customer info available</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="info-card h-100">
+                        <div class="info-card-header bg-warning text-dark">
+                            <i class="fas fa-shopping-cart me-2"></i>Original Sale | मूल बिक्री
+                        </div>
+                        <div class="info-card-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <small class="text-muted">Invoice:</small><br>
+                                        <strong class="text-success">@Model.SaleInvoiceNumber</strong>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">Sale ID:</small><br>
+                                        <strong>#@Model.SaleId</strong>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-2">
+                                        <small class="text-muted">Return Reason:</small><br>
+                                        <strong class="small">@Model.ReturnReason</strong>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted">Status:</small><br>
+                                        <span class="status-badge bg-success text-white">
+                                            <i class="fas fa-check-double me-1"></i>Completed
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Returned Items Table -->
+        <div class="receipt-section">
+            <div class="table-responsive shadow-sm">
+                <table class="table table-bordered mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%">#</th>
+                            <th style="width: 40%">
+                                <i class="fas fa-tag me-1"></i>Returned Item Details
+                            </th>
+                            <th class="text-center" style="width: 8%">
+                                <i class="fas fa-undo me-1"></i>Qty
+                            </th>
+                            <th class="text-end" style="width: 12%">
+                                <i class="fas fa-rupee-sign me-1"></i>Unit Price
+                            </th>
+                            <th class="text-end" style="width: 10%">
+                                <i class="fas fa-tag me-1"></i>Disc.
+                            </th>
+                            <th class="text-center" style="width: 8%">
+                                <i class="fas fa-percent me-1"></i>GST%
+                            </th>
+                            <th class="text-end" style="width: 12%">
+                                <i class="fas fa-calculator me-1"></i>GST Amt
+                            </th>
+                            <th class="text-end" style="width: 15%">
+                                <i class="fas fa-money-bill me-1"></i>Refund
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            int itemNumber = 1;
+                        }
+                        @foreach (var item in Model.ReturnItems)
+                        {
+                            <tr>
+                                <td class="text-center fw-bold">@itemNumber</td>
+                                <td>
+                                    <div>
+                                        <strong class="text-dark">@item.ProductName</strong><br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-barcode me-1"></i>Product ID: @item.ProductId
+                                            @if (item.OriginalQuantity > item.ReturnQuantity)
+                                            {
+                                                <span class="text-info ms-2">(@item.ReturnQuantity of @item.OriginalQuantity)</span>
+                                            }
+                                        </small>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-success text-white fs-6 px-2 py-1">
+                                        @item.ReturnQuantity
+                                    </span>
+                                </td>
+                                <td class="text-end fw-semibold">₹@item.UnitPrice.ToString("N2")</td>
+                                <td class="text-end">
+                                    @if (item.DiscountAmount > 0)
+                                    {
+                                        <span class="text-warning fw-semibold">₹@item.DiscountAmount.ToString("N2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td class="text-center fw-semibold">@item.GSTRate%</td>
+                                <td class="text-end text-muted">₹@item.GSTAmount.ToString("N2")</td>
+                                <td class="text-end">
+                                    <strong class="text-success fs-6">₹@item.LineTotal.ToString("N2")</strong>
+                                </td>
+                            </tr>
+                            itemNumber++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Refund Information & Totals -->
+        <div class="receipt-section">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-card h-100">
+                        <div class="info-card-header bg-info text-white">
+                            <i class="fas fa-credit-card me-2"></i>Refund Information | रिफंड जानकारी
+                        </div>
+                        <div class="info-card-body">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-semibold">Refund Status:</span>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-double me-1"></i>Completed
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-semibold">Refund Method:</span>
+                                    <span class="badge bg-primary">
+                                        @switch (Model.RefundMethod)
+                                        {
+                                            case "Cash":
+                                                <i class="fas fa-money-bill-wave me-1"></i>
+                                        
+                                                <text>Cash</text>
+                                                break;
+                                            case "Card":
+                                                <i class="fas fa-credit-card me-1"></i>
+                                        
+                                                <text>Card</text>
+                                                break;
+                                            case "UPI":
+                                                <i class="fas fa-mobile-alt me-1"></i>
+                                        
+                                                <text>UPI</text>
+                                                break;
+                                            case "BankTransfer":
+                                                <i class="fas fa-university me-1"></i>
+                                        
+                                                <text>Bank Transfer</text>
+                                                break;
+                                            case "StoreCredit":
+                                                <i class="fas fa-gift me-1"></i>
+                                        
+                                                <text>Store Credit</text>
+                                                break;
+                                            default:
+                                                <text>@Model.RefundMethod</text>
+                                                break;
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.RefundReference))
+                            {
+                                <div class="mb-3">
+                                    <small class="text-muted">Reference Number:</small><br>
+                                    <code class="bg-light p-1 rounded">@Model.RefundReference</code>
+                                </div>
+                            }
+
+                            <div class="mb-3">
+                                <small class="text-muted">Processing Summary:</small><br>
+                                <div class="small">
+                                    <i class="fas fa-boxes text-primary me-1"></i>@Model.ReturnItems.Count() product type(s)<br>
+                                    <i class="fas fa-layer-group text-success me-1"></i>@Model.TotalItems total items<br>
+                                    <i class="fas fa-clock text-info me-1"></i>Processed on @Model.ReturnDate.ToString("dd MMM yyyy")<br>
+                                    <i class="fas fa-check-double text-success me-1"></i>Refund completed immediately
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.Notes))
+                            {
+                                <div class="mt-3 pt-2 border-top">
+                                    <small class="text-muted">Additional Notes:</small><br>
+                                    <small class="text-dark">@Model.Notes</small>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="amount-box h-100">
+                        <h6 class="text-success mb-3">
+                            <i class="fas fa-calculator me-2"></i>Refund Calculation | रिफंड गणना
+                        </h6>
+
+                        <table class="table table-borderless mb-3">
+                            <tr>
+                                <td class="py-2">
+                                    <i class="fas fa-calculator text-primary me-2"></i>Subtotal:
+                                </td>
+                                <td class="text-end py-2 fw-semibold">₹@Model.SubTotal.ToString("N2")</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2">
+                                    <i class="fas fa-percent text-warning me-2"></i>GST Amount:
+                                </td>
+                                <td class="text-end py-2 fw-semibold">₹@Model.GSTAmount.ToString("N2")</td>
+                            </tr>
+                            <tr class="border-top border-2 border-success">
+                                <td class="py-3">
+                                    <strong class="text-success">
+                                        <i class="fas fa-rupee-sign me-2"></i>TOTAL REFUND:
+                                    </strong>
+                                </td>
+                                <td class="text-end py-3">
+                                    <div class="total-highlight text-center">
+                                        <div class="h4 mb-0 fw-bold">₹@Model.TotalAmount.ToString("N2")</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                Amount in words: <strong>@NumberToWords.ConvertAmount(Model.TotalAmount) Only</strong>
+                            </small>
+                        </div>
+
+                        <div class="text-center mt-3 p-2 bg-success bg-opacity-10 border border-success rounded">
+                            <i class="fas fa-check-circle text-success me-1"></i>
+                            <strong class="text-success">Refund Completed Successfully</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="receipt-footer text-center">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <i class="fas fa-heart text-danger"></i>
+                        <strong class="text-primary">Thank You!</strong>
+                        <i class="fas fa-heart text-danger"></i><br>
+                        <small class="text-muted">धन्यवाद! | for your understanding</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <div class="badge bg-success text-white fs-6 px-3 py-2">
+                            <i class="fas fa-check-double me-1"></i>
+                            <strong>Return Complete</strong>
+                            <i class="fas fa-check-double ms-1"></i>
+                        </div><br>
+                        <small class="text-muted mt-1 d-block">रिटर्न पूर्ण</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-print me-1"></i>Printed: @DateTime.Now.ToString("dd MMM yyyy, hh:mm tt")<br>
+                            <i class="fas fa-user me-1"></i>System Generated Receipt
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Final Success Message -->
+            <div class="mt-4 pt-3 border-top">
+                <div class="row text-center">
+                    <div class="col-12">
+                        <div class="alert alert-success">
+                            <div class="d-flex align-items-center justify-content-center">
+                                <i class="fas fa-trophy fa-2x me-3 text-warning"></i>
+                                <div>
+                                    <strong>🎉 Return Successfully Processed!</strong><br>
+                                    <small>Refund of <strong>₹@Model.TotalAmount.ToString("N2")</strong> completed via <strong>@Model.RefundMethod</strong>. Inventory updated and customer satisfied!</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Store Values Footer -->
+            <div class="mt-3 pt-3 border-top">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <i class="fas fa-leaf text-success"></i>
+                        <small class="d-block text-muted">Eco-Friendly</small>
+                    </div>
+                    <div class="col-4">
+                        <i class="fas fa-hands-helping text-warning"></i>
+                        <small class="d-block text-muted">Handmade</small>
+                    </div>
+                    <div class="col-4">
+                        <i class="fas fa-flag text-primary"></i>
+                        <small class="d-block text-muted">Made in India</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-print functionality
+        window.addEventListener('load', function() {
+            // Auto-focus print button
+            const printBtn = document.querySelector('button[onclick="window.print()"]');
+            if (printBtn) printBtn.focus();
+        });
+
+        // Enhanced print styles
+        window.addEventListener('beforeprint', function() {
+            document.body.style.fontSize = '12px';
+        });
+
+        window.addEventListener('afterprint', function() {
+            document.body.style.fontSize = '14px';
+        });
+    </script>
+</body>
+</html>
+
+@functions {
+    public static class NumberToWords
+    {
+        private static readonly string[] ones = new string[]
+        {
+            "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+            "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+            "Seventeen", "Eighteen", "Nineteen"
+        };
+
+        private static readonly string[] tens = new string[]
+        {
+            "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
+        };
+
+        public static string ConvertAmount(decimal amount)
+        {
+            try
+            {
+                int rupees = (int)amount;
+                int paise = (int)Math.Round((amount - rupees) * 100);
+
+                string result = ConvertNumber(rupees) + " Rupee" + (rupees != 1 ? "s" : "");
+
+                if (paise > 0)
+                {
+                    result += " and " + ConvertNumber(paise) + " Paise";
+                }
+
+                return result;
+            }
+            catch
+            {
+                return "Amount conversion error";
+            }
+        }
+
+        private static string ConvertNumber(int number)
+        {
+            if (number == 0) return "Zero";
+            if (number < 0) return "Minus " + ConvertNumber(Math.Abs(number));
+
+            string words = "";
+
+            if (number / 10000000 > 0)
+            {
+                words += ConvertNumber(number / 10000000) + " Crore ";
+                number %= 10000000;
+            }
+
+            if (number / 100000 > 0)
+            {
+                words += ConvertNumber(number / 100000) + " Lakh ";
+                number %= 100000;
+            }
+
+            if (number / 1000 > 0)
+            {
+                words += ConvertNumber(number / 1000) + " Thousand ";
+                number %= 1000;
+            }
+
+            if (number / 100 > 0)
+            {
+                words += ConvertNumber(number / 100) + " Hundred ";
+                number %= 100;
+            }
+
+            if (number > 0)
+            {
+                if (words != "") words += "and ";
+
+                if (number < 20)
+                    words += ones[number];
+                else
+                {
+                    words += tens[number / 10];
+                    if (number % 10 > 0)
+                        words += "-" + ones[number % 10];
+                }
+            }
+
+            return words.Trim();
+        }
+    }
+}

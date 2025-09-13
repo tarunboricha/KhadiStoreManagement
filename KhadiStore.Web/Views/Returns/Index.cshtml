@@ -1,0 +1,428 @@
+﻿@model IEnumerable<KhadiStore.Application.DTOs.ReturnDto>
+@{
+    ViewData["Title"] = "Returns Management";
+}
+
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="page-title text-primary">
+            <i class="fas fa-undo-alt me-2 text-warning"></i>
+            Returns Management
+            <small class="text-muted fs-6 ms-2">| खादी भारत रिटर्न प्रबंधन</small>
+        </h1>
+    </div>
+</div>
+
+<!-- Quick Stats Dashboard -->
+@{
+    var totalReturns = Model.Sum(r => r.TotalAmount);
+    var totalReturnCount = Model.Count();
+    var avgReturnValue = totalReturnCount > 0 ? totalReturns / totalReturnCount : 0;
+}
+
+<div class="row mb-4">
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);">
+            <div class="card-body text-white text-center">
+                <i class="fas fa-undo-alt fa-3x mb-3 opacity-75"></i>
+                <h3 class="fw-bold">₹@totalReturns.ToString("N0")</h3>
+                <p class="mb-0 opacity-90">Total Returns Value</p>
+                <small class="opacity-75">कुल रिटर्न राशि</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #138808 0%, #28a745 100%);">
+            <div class="card-body text-white text-center">
+                <i class="fas fa-list-alt fa-3x mb-3 opacity-75"></i>
+                <h3 class="fw-bold">@totalReturnCount</h3>
+                <p class="mb-0 opacity-90">Total Returns</p>
+                <small class="opacity-75">कुल रिटर्न संख्या</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);">
+            <div class="card-body text-white text-center">
+                <i class="fas fa-chart-line fa-3x mb-3 opacity-75"></i>
+                <h3 class="fw-bold">₹@avgReturnValue.ToString("N0")</h3>
+                <p class="mb-0 opacity-90">Avg Return Value</p>
+                <small class="opacity-75">औसत रिटर्न मूल्य</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header" style="background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);">
+        <h5 class="mb-0 text-white">
+            <i class="fas fa-filter me-2"></i>
+            Filter Returns | फिल्टर रिटर्न
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-calendar-day me-1 text-primary"></i>From Date
+                </label>
+                <input type="date" class="form-control" name="startDate"
+                       value="@ViewBag.StartDate?.ToString("yyyy-MM-dd")"
+                       style="border-left: 4px solid #FF6B35;">
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-calendar-check me-1 text-primary"></i>To Date
+                </label>
+                <input type="date" class="form-control" name="endDate"
+                       value="@ViewBag.EndDate?.ToString("yyyy-MM-dd")"
+                       style="border-left: 4px solid #FF6B35;">
+            </div>
+            <div class="col-lg-3 col-md-4">
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-credit-card me-1 text-info"></i>Refund Method
+                </label>
+                <select class="form-select" name="refundMethod" style="border-left: 4px solid #17a2b8;">
+                    <option value="">All Methods</option>
+                    <option value="Cash" selected="@(ViewBag.RefundMethod == "Cash")">💵 Cash</option>
+                    <option value="Card" selected="@(ViewBag.RefundMethod == "Card")">💳 Card</option>
+                    <option value="UPI" selected="@(ViewBag.RefundMethod == "UPI")">📱 UPI</option>
+                    <option value="BankTransfer" selected="@(ViewBag.RefundMethod == "BankTransfer")">🏦 Bank Transfer</option>
+                    <option value="StoreCredit" selected="@(ViewBag.RefundMethod == "StoreCredit")">🎁 Store Credit</option>
+                </select>
+            </div>
+            <div class="col-lg-3 col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100"
+                        style="background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%); border: none;">
+                    <i class="fas fa-search me-1"></i> Search
+                </button>
+            </div>
+        </form>
+
+        <!-- Quick Filter Buttons -->
+        <div class="row mt-3">
+            <div class="col-lg-8">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="setDateRange('today')">
+                        <i class="fas fa-calendar-day me-1"></i>Today
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="setDateRange('week')">
+                        <i class="fas fa-calendar-week me-1"></i>This Week
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="setDateRange('month')">
+                        <i class="fas fa-calendar-alt me-1"></i>This Month
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="setDateRange('clear')">
+                        <i class="fas fa-eraser me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+            <div class="col-lg-4 text-end">
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-times me-1"></i> Clear All Filters
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Returns Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header" style="background: linear-gradient(135deg, #138808 0%, #28a745 100%);">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-white">
+                <i class="fas fa-table me-2"></i>
+                Returns History (@Model.Count() records) | रिटर्न इतिहास
+            </h5>
+            <div>
+                <button class="btn btn-light btn-sm" onclick="exportReturnsToCSV()">
+                    <i class="fas fa-download me-1 text-success"></i> Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="returnsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 12%">
+                                <i class="fas fa-hashtag text-primary me-1"></i>Return No.
+                            </th>
+                            <th style="width: 15%">
+                                <i class="fas fa-receipt text-success me-1"></i>Original Sale
+                            </th>
+                            <th style="width: 18%">
+                                <i class="fas fa-user text-info me-1"></i>Customer
+                            </th>
+                            <th style="width: 12%">
+                                <i class="fas fa-calendar text-warning me-1"></i>Return Date
+                            </th>
+                            <th class="text-center" style="width: 8%">
+                                <i class="fas fa-boxes text-secondary me-1"></i>Items
+                            </th>
+                            <th class="text-end" style="width: 10%">
+                                <i class="fas fa-rupee-sign text-danger me-1"></i>Amount
+                            </th>
+                            <th class="text-center" style="width: 10%">
+                                <i class="fas fa-check-circle text-success me-1"></i>Status
+                            </th>
+                            <th class="text-center" style="width: 15%">
+                                <i class="fas fa-tools text-dark me-1"></i>Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var returnOrder in Model.OrderByDescending(r => r.ReturnDate))
+                        {
+                            <tr class="align-middle">
+                                <td>
+                                    <div>
+                                        <strong class="text-primary">@returnOrder.ReturnNumber</strong>
+                                        <br>
+                                        <small class="text-muted">#@returnOrder.Id</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <a href="@Url.Action("Details", "Sales", new { id = returnOrder.SaleId })"
+                                           class="text-decoration-none fw-semibold text-success">
+                                            @returnOrder.SaleInvoiceNumber
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">Sale #@returnOrder.SaleId</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(returnOrder.CustomerName))
+                                    {
+                                        <div>
+                                            <strong class="text-dark">@returnOrder.CustomerName</strong>
+                                            @if (!string.IsNullOrEmpty(returnOrder.CustomerPhone))
+                                            {
+                                                <br>
+                                
+                                                <small class="text-muted">
+                                                    <i class="fas fa-phone me-1"></i>@returnOrder.CustomerPhone
+                                                </small>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic">
+                                            <i class="fas fa-user-times me-1"></i>Walk-in Customer
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@returnOrder.ReturnDate.ToString("dd MMM yyyy")</strong>
+                                        <br>
+                                        <small class="text-muted">@returnOrder.ReturnDate.ToString("hh:mm tt")</small>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border fs-6">
+                                        @returnOrder.TotalItems
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <strong class="text-danger fs-6">₹@returnOrder.TotalAmount.ToString("N2")</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-success text-white">
+                                        <i class="fas fa-check-double me-1"></i>Completed
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">
+                                        @returnOrder.ReturnDate.ToString("dd MMM")
+                                    </small>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="@Url.Action("Details", new { id = returnOrder.Id })"
+                                           class="btn btn-outline-primary"
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="@Url.Action("ReturnReceipt", new { id = returnOrder.Id })"
+                                           class="btn btn-outline-secondary"
+                                           title="Print Receipt"
+                                           target="_blank">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-5 text-center">
+                <div class="mb-4">
+                    <i class="fas fa-undo-alt fa-4x text-muted opacity-50"></i>
+                </div>
+                <h4 class="text-muted mb-3">No Returns Found</h4>
+                <p class="text-muted mb-4">
+                    No returns match your current filters, or no returns have been processed yet.<br>
+                    <small>आपके फिल्टर से कोई रिटर्न नहीं मिला या अभी तक कोई रिटर्न प्रोसेस नहीं हुआ है।</small>
+                </p>
+                <a href="@Url.Action("Index", "Sales")" class="btn btn-primary">
+                    <i class="fas fa-receipt me-1"></i> View Sales to Process Returns
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <!-- Analytics Summary -->
+    <div class="row mt-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 text-dark">
+                        <i class="fas fa-chart-pie me-2 text-primary"></i>Refund Method Breakdown
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @{
+                        var refundGroups = Model.GroupBy(r => r.RefundMethod).Select(g => new
+                        {
+                            Method = g.Key,
+                            Count = g.Count(),
+                            Amount = g.Sum(r => r.TotalAmount),
+                            Percentage = (decimal)g.Count() / totalReturnCount * 100
+                        });
+                    }
+                    @foreach (var group in refundGroups.OrderByDescending(g => g.Amount))
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <span class="fw-semibold">@group.Method</span>
+                                <small class="text-muted ms-2">(@group.Count returns)</small>
+                            </div>
+                            <div class="text-end">
+                                <div><strong>₹@group.Amount.ToString("N0")</strong></div>
+                                <div class="progress mt-1" style="height: 4px; width: 80px;">
+                                    <div class="progress-bar bg-primary" style="width: @group.Percentage.ToString("F1")%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 text-dark">
+                        <i class="fas fa-chart-bar me-2 text-success"></i>Return Insights
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span><i class="fas fa-chart-line me-2 text-primary"></i>Average Return Value</span>
+                        <strong class="text-primary">₹@avgReturnValue.ToString("N0")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span><i class="fas fa-boxes me-2 text-info"></i>Total Items Returned</span>
+                        <strong class="text-info">@Model.Sum(r => r.TotalItems)</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span><i class="fas fa-calendar me-2 text-warning"></i>Returns Today</span>
+                        <strong class="text-warning">@Model.Count(r => r.ReturnDate.Date == DateTime.Today)</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-money-bill me-2 text-secondary"></i>Total Refunded</span>
+                        <strong class="text-success">₹@totalReturns.ToString("N0")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Date range helper functions
+        function setDateRange(range) {
+            const today = new Date();
+            let startDate, endDate;
+
+            switch(range) {
+                case 'today':
+                    startDate = endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'week':
+                    const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+                    startDate = weekStart.toISOString().split('T')[0];
+                    endDate = new Date().toISOString().split('T')[0];
+                    break;
+                case 'month':
+                    startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                    endDate = new Date().toISOString().split('T')[0];
+                    break;
+                case 'clear':
+                    startDate = endDate = '';
+                    break;
+            }
+
+            $('input[name="startDate"]').val(startDate);
+            $('input[name="endDate"]').val(endDate);
+        }
+
+        // Export to CSV function
+        function exportReturnsToCSV() {
+            let csv = 'Return Number,Sale Invoice,Customer Name,Customer Phone,Return Date,Total Items,Return Amount,Refund Method\n';
+
+            $('#returnsTable tbody tr').each(function() {
+                const row = $(this);
+                const returnNo = row.find('td:eq(0) strong').text().trim();
+                const saleInvoice = row.find('td:eq(1) a').text().trim();
+                const customerName = row.find('td:eq(2) strong').text().trim() || 'Walk-in Customer';
+                const customerPhone = row.find('td:eq(2) small i.fa-phone').parent().text().replace('📞', '').trim();
+                const returnDate = row.find('td:eq(3) strong').text().trim() + ' ' + row.find('td:eq(3) small').text().trim();
+                const totalItems = row.find('td:eq(4) .badge').text().trim();
+                const returnAmount = row.find('td:eq(5) strong').text().replace('₹', '').replace(/,/g, '').trim();
+
+                csv += `"${returnNo}","${saleInvoice}","${customerName}","${customerPhone}","${returnDate}","${totalItems}","${returnAmount}","Completed"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `khadi-returns-export-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Export Successful!',
+                text: 'Returns data has been exported to CSV file.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+
+        // Initialize tooltips
+        $(document).ready(function() {
+            $('[title]').tooltip();
+        });
+    </script>
+
+    <!-- Include SweetAlert2 for beautiful alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+}

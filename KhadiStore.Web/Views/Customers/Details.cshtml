@@ -1,0 +1,238 @@
+﻿@model KhadiStore.Application.DTOs.CustomerDto
+@{
+    ViewData["Title"] = "Customer Details";
+}
+
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="page-title">
+            <i class="fas fa-user me-2"></i>
+            @Model.Name
+        </h1>
+    </div>
+    <div class="col-auto">
+        <a href="@Url.Action("Create", "Sales", new { customerId = Model.Id })" class="btn btn-success">
+            <i class="fas fa-plus me-1"></i> New Sale
+        </a>
+        <a href="@Url.Action("Edit", new { id = Model.Id })" class="btn btn-warning">
+            <i class="fas fa-edit me-1"></i> Edit Customer
+        </a>
+        <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Customers
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4">
+        <!-- Customer Card -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-user-circle fa-5x text-primary"></i>
+                </div>
+                <h4>@Model.Name</h4>
+                <div class="mb-2">
+                    @if (Model.CustomerType == "Wholesale")
+                    {
+                        <span class="badge bg-warning text-dark fs-6">Wholesale Customer</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-primary fs-6">Retail Customer</span>
+                    }
+                </div>
+                @if (Model.IsActive)
+                {
+                    <span class="badge bg-success">Active</span>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">Inactive</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <!-- Customer Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Customer Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Basic Details</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Name:</strong></td>
+                                <td>@Model.Name</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Type:</strong></td>
+                                <td>@Model.CustomerType</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    @if (Model.IsActive)
+                                    {
+                                        <span class="badge bg-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Joined:</strong></td>
+                                <td>@Model.CreatedAt.ToString("dd MMM yyyy")</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-3">Contact Details</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Phone:</strong></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(Model.Phone))
+                                    {
+                                        <span>@Model.Phone</span>
+                                        <a href="tel:@Model.Phone" class="btn btn-sm btn-outline-primary ms-1">
+                                            <i class="fas fa-phone"></i>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not provided</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(Model.Email))
+                                    {
+                                        <span>@Model.Email</span>
+                                        <a href="mailto:@Model.Email" class="btn btn-sm btn-outline-primary ms-1">
+                                            <i class="fas fa-envelope"></i>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Not provided</span>
+                                    }
+                                </td>
+                            </tr>
+                            @if (!string.IsNullOrEmpty(Model.GSTNumber))
+                            {
+                                <tr>
+                                    <td><strong>GST Number:</strong></td>
+                                    <td>@Model.GSTNumber</td>
+                                </tr>
+                            }
+                        </table>
+
+                        @if (Model.TotalOrders > 0)
+                        {
+                            <a href="@Url.Action("Index", "Sales", new { customerId = Model.Id })" class="btn btn-info">
+                                <i class="fas fa-receipt me-1"></i> View Purchase History
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.Address))
+                {
+                    <h6 class="text-muted mb-3 mt-3">Address</h6>
+                    <div class="border rounded p-3 bg-light">
+                        <div>@Model.Address</div>
+                        @if (!string.IsNullOrEmpty(Model.City) || !string.IsNullOrEmpty(Model.State))
+                        {
+                            <div class="mt-1">
+                                @if (!string.IsNullOrEmpty(Model.City))
+                                {
+                                    <span>@Model.City</span>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.State))
+                                {
+                                    <span>@(!string.IsNullOrEmpty(Model.City) ? ", " : "")@Model.State</span>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.PinCode))
+                                {
+                                    <span> - @Model.PinCode</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Customer Statistics
+                </h6>
+            </div>
+            <div class="card-body">
+                @if (ViewBag.CustomerStatistics != null)
+                {
+                    var stats = ViewBag.CustomerStatistics;
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-primary mb-1">@stats.TotalOrders</h4>
+                                <small class="text-muted">Total Orders</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-success mb-1">₹@stats.TotalPurchases.ToString("N2")</h4>
+                                <small class="text-muted">Total Purchases</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-info mb-1">₹@stats.AverageOrderValue.ToString("N2")</h4>
+                                <small class="text-muted">Average Order Value</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h4 class="text-warning mb-1">
+                                    @(stats.LastPurchaseDate?.ToString("MMM dd, yyyy") ?? "Never")
+                                </h4>
+                                <small class="text-muted">Last Purchase</small>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No purchase history available.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function deleteCustomer(id, name) {
+            if (confirm(`Are you sure you want to delete customer "${name}"?\n\nThis action cannot be undone and will affect sales history.`)) {
+                $.post('@Url.Action("Delete")', { id: id })
+                    .done(function() {
+                        window.location.href = '@Url.Action("Index")';
+                    })
+                    .fail(function() {
+                        alert('Error occurred while deleting customer. Customer may have associated sales.');
+                    });
+            }
+        }
+    </script>
+}

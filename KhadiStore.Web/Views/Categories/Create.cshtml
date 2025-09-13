@@ -1,0 +1,121 @@
+﻿@model KhadiStore.Application.DTOs.CreateCategoryDto
+@{
+    ViewData["Title"] = "Add Category";
+}
+
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="page-title">
+            <i class="fas fa-plus-square me-2"></i>
+            Add New Category
+        </h1>
+    </div>
+    <div class="col-auto">
+        <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Categories
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Category Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="Create">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label asp-for="Name" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>
+                                    Category Name <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Name" class="form-control" placeholder="e.g., Men's Kurtas, Silk Sarees">
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="ImagePath" class="form-label">
+                                    <i class="fas fa-image me-1"></i>
+                                    Image Path
+                                </label>
+                                <input asp-for="ImagePath" class="form-control" placeholder="Optional image path">
+                                <span asp-validation-for="ImagePath" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Description" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>
+                            Description
+                        </label>
+                        <textarea asp-for="Description" class="form-control" rows="4"
+                                  placeholder="Describe this category and what types of products it will contain..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                        <div class="form-text">Provide a clear description to help customers understand what products belong in this category.</div>
+                    </div>
+
+                    <!-- Sample Categories for Reference -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb me-1"></i> Popular Indian Textile Categories:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li>Khadi Cotton</li>
+                                    <li>Silk Sarees</li>
+                                    <li>Men's Kurtas</li>
+                                    <li>Women's Kurtis</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="mb-0">
+                                    <li>Handloom Fabrics</li>
+                                    <li>Traditional Dhotis</li>
+                                    <li>Dupattas & Stoles</li>
+                                    <li>Ethnic Wear</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="@Url.Action("Index")" class="btn btn-outline-secondary me-md-2">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Save Category
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        // Auto-focus on category name field
+        $(document).ready(function() {
+            $('#Name').focus();
+        });
+
+        // Generate slug-like suggestions (optional enhancement)
+        $('#Name').on('input', function() {
+            const name = $(this).val();
+            // You could add logic here to suggest image paths or validate names
+        });
+    </script>
+}
