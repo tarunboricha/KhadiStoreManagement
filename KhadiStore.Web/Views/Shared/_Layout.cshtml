@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="~/KhadiStore.Web.styles.css" asp-append-version="true" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <style>
         /* Indian Khadi Theme CSS */
         :root {
@@ -21,6 +20,7 @@
             --khadi-gold: #DAA520;
             --khadi-brown: #8B4513;
             --khadi-saffron: #FF9933;
+            --sidebar-width: 260px;
         }
 
         body {
@@ -33,14 +33,77 @@
             background: linear-gradient(90deg, var(--khadi-saffron) 0%, var(--khadi-white) 50%, var(--khadi-green) 100%);
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-bottom: 3px solid var(--khadi-gold);
+            padding: 8px 0;
         }
 
+        /* Enhanced Navbar Brand - Vertical Layout */
         .navbar-brand {
             font-weight: 700 !important;
-            font-size: 1.8rem !important;
+            font-size: 1.5rem !important;
             color: var(--khadi-navy) !important;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 5px 15px;
         }
+
+            .navbar-brand:hover {
+                color: var(--khadi-orange) !important;
+                transform: translateY(-1px);
+                text-decoration: none;
+            }
+
+        .brand-logo {
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        .navbar-logo {
+            width: 100px;
+            height: 40px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            transition: all 0.3s ease;
+        }
+
+            .navbar-logo:hover {
+                transform: scale(1.1);
+            }
+
+        .brand-text {
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .store-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--khadi-navy);
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        /* Sidebar Toggle Button */
+        .sidebar-toggle {
+            background: none;
+            border: 2px solid var(--khadi-navy);
+            color: var(--khadi-navy);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            margin-right: 15px;
+        }
+
+            .sidebar-toggle:hover {
+                background: var(--khadi-navy);
+                color: white;
+                transform: translateY(-1px);
+            }
 
         .navbar-nav .nav-link {
             color: var(--khadi-navy) !important;
@@ -49,12 +112,188 @@
             border-radius: 8px;
             margin: 0 2px;
             transition: all 0.3s ease;
+            font-size: 18px;
         }
 
             .navbar-nav .nav-link:hover {
                 background-color: rgba(255, 255, 255, 0.8);
                 transform: translateY(-1px);
                 color: var(--khadi-orange) !important;
+            }
+
+        /* Dropdown Enhancement */
+        .dropdown-menu {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+            background: white;
+            margin-top: 5px;
+        }
+
+        .dropdown-item {
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+
+            .dropdown-item:hover {
+                background-color: var(--khadi-cream);
+                color: var(--khadi-navy);
+                transform: translateX(3px);
+            }
+
+            .dropdown-item i {
+                width: 20px;
+                text-align: center;
+            }
+
+        /* Light Sidebar Styles */
+        .sidebar {
+            position: fixed;
+            left: calc(-1 * var(--sidebar-width));
+            width: var(--sidebar-width);
+            height: calc(100vh - 70px);
+            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+            transition: left 0.3s ease;
+            z-index: 1025;
+            overflow-y: auto;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+            border-right: 3px solid var(--khadi-gold);
+        }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 2px solid var(--khadi-light-orange);
+            background: var(--khadi-light-orange);
+        }
+
+        .sidebar-title {
+            color: var(--khadi-navy);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+            .sidebar-title i {
+                margin-right: 10px;
+                color: var(--khadi-orange);
+            }
+
+        .sidebar-menu {
+            padding: 15px 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .menu-item {
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .menu-link {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            color: var(--khadi-navy);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+            .menu-link:hover {
+                background: var(--khadi-cream);
+                color: var(--khadi-orange);
+                padding-left: 25px;
+                text-decoration: none;
+            }
+
+            .menu-link.active {
+                background: var(--khadi-orange);
+                color: white;
+                border-right: 4px solid var(--khadi-gold);
+            }
+
+            .menu-link i {
+                width: 20px;
+                text-align: center;
+                margin-right: 12px;
+                font-size: 16px;
+            }
+
+        /* Light Dropdown in Sidebar */
+        .dropdown-toggle-sidebar {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .dropdown-menu-sidebar {
+            background: rgba(255,255,255,0.8);
+            border: none;
+            margin: 0;
+            padding: 0;
+            position: static;
+            display: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+            .dropdown-menu-sidebar.show {
+                display: block;
+            }
+
+        .dropdown-item-sidebar {
+            padding: 10px 20px 10px 50px;
+            color: var(--khadi-navy);
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+            .dropdown-item-sidebar:hover {
+                background: var(--khadi-light-orange);
+                color: var(--khadi-orange);
+                text-decoration: none;
+                padding-left: 55px;
+            }
+
+            .dropdown-item-sidebar i {
+                width: 16px;
+                text-align: center;
+                margin-right: 10px;
+                font-size: 14px;
+            }
+
+        /* Content Area */
+        .content-area {
+            transition: margin-left 0.3s ease;
+        }
+
+            .content-area.sidebar-open {
+                margin-left: var(--sidebar-width);
+            }
+
+        /* Overlay for mobile */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1020;
+            display: none;
+        }
+
+            .sidebar-overlay.active {
+                display: block;
             }
 
         .card {
@@ -206,15 +445,127 @@
             border-bottom: 3px solid var(--khadi-orange);
             display: inline-block;
         }
+
+        /* Badge Styling */
+        .badge {
+            font-size: 0.7rem;
+            padding: 3px 6px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        /* Navbar Toggler */
+        .navbar-toggler {
+            border: 2px solid var(--khadi-navy);
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+
+            .navbar-toggler:focus {
+                box-shadow: 0 0 0 0.2rem rgba(0, 0, 139, 0.25);
+            }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 139, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+            width: 20px;
+            height: 15px;
+        }
+
+        /* Responsive Design */
+        @@media (max-width: 991.98px) {
+            .content-area.sidebar-open
+
+        {
+            margin-left: 0;
+        }
+
+        .navbar-logo {
+            width: 35px;
+            height: 35px;
+        }
+
+        .store-name {
+            font-size: 1rem;
+        }
+
+        .navbar-collapse {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            margin-top: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        }
+
+        @@media (max-width: 767.98px) {
+            .navbar-brand
+
+        {
+            padding: 5px 10px;
+        }
+
+        .navbar-logo {
+            width: 32px;
+            height: 32px;
+        }
+
+        .store-name {
+            font-size: 0.9rem;
+        }
+
+        .sidebar {
+            width: 280px;
+            left: -280px;
+        }
+
+        }
+
+        @@media (max-width: 575.98px) {
+            .navbar-logo
+
+        {
+            width: 28px;
+            height: 28px;
+        }
+
+        .store-name {
+            font-size: 0.85rem;
+        }
+
+        .brand-logo {
+            margin-bottom: 4px;
+        }
+
+        .sidebar {
+            width: 100%;
+            left: -100%;
+        }
+
+        }
     </style>
 </head>
 <body class="indian-pattern">
     <nav class="navbar navbar-expand-lg navbar-khadi sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">
-                <i class="fas fa-store text-warning me-2"></i>
-                खादी भारत स्टोर
-            </a>
+            <!-- Sidebar Toggle + Brand -->
+            <div class="d-flex align-items-center">
+                <button class="sidebar-toggle d-lg-inline-block" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+
+                <a class="navbar-brand" href="/">
+                    <div class="brand-logo">
+                        <img src="https://www.khadiindia.gov.in/images/KhadiIndiaLogopsd.png"
+                             alt="Khadi India Logo"
+                             class="navbar-logo"
+                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSI0MCIgY3k9IjQwIiByPSIzOCIgZmlsbD0iI0ZGOTkzMyIvPgogIDx0ZXh0IHg9IjQwIiB5PSI0NSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE0IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPktIQURJPC90ZXh0PgogIDx0ZXh0IHg9IjQwIiB5PSI1OCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEwIiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+SU5ESUE8L3RleHQ+Cjwvc3ZnPgo=';">
+                    </div>
+                    <div class="brand-text">
+                        <div class="store-name">Bhavena Khadi Bhavan</div>
+                    </div>
+                </a>
+            </div>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -228,59 +579,26 @@
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="returnsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-undo-alt me-1"></i>
-                            Returns
-                            @if (ViewBag.PendingReturns > 0)
-                            {
-                                <span class="badge bg-warning text-dark ms-1">@ViewBag.PendingReturns</span>
-                            }
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="returnsDropdown">
-                            <li>
-                                <a class="dropdown-item" href="@Url.Action("Index", "Returns")">
-                                    <i class="fas fa-list me-2 text-primary"></i>Completed Returns
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="@Url.Action("Index", "Sales")">
-                                    <i class="fas fa-plus me-2 text-primary"></i>Process New Return
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="productsDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-tshirt me-1"></i> Products
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Products")">All Products</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("LowStock", "Products")">Low Stock</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Create", "Products")">Add Product</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="salesDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-cash-register me-1"></i> Sales
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="@Url.Action("Index", "Sales")">All Sales</a></li>
-                            <li><a class="dropdown-item" href="@Url.Action("Create", "Sales")">New Sale</a></li>
+                            <li>
+                                <a class="dropdown-item" href="@Url.Action("Index", "Sales")">
+                                    <i class="fas fa-list me-2 text-primary"></i>
+                                    <span>All Sales</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="@Url.Action("Create", "Sales")">
+                                    <i class="fas fa-plus me-2 text-success"></i>
+                                    <span>New Sale</span>
+                                </a>
+                            </li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="@Url.Action("Index", "Customers")">
-                            <i class="fas fa-users me-1"></i> Customers
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="@Url.Action("Index", "Categories")">
-                            <i class="fas fa-tags me-1"></i> Categories
-                        </a>
-                    </li>
                 </ul>
-
                 <ul class="navbar-nav">
                     <partial name="_LoginPartial" />
                 </ul>
@@ -288,33 +606,106 @@
         </div>
     </nav>
 
-    <main class="container-fluid py-4">
-        @if (TempData["Success"] != null)
-        {
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle me-2"></i>
-                @TempData["Success"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
+    <!-- Light Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h5 class="sidebar-title">
+                <i class="fas fa-th-large"></i>
+                More Options
+            </h5>
+        </div>
 
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                @TempData["Error"]
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        }
+        <ul class="sidebar-menu">
+            <li class="menu-item">
+                <div class="dropdown">
+                    <a class="menu-link dropdown-toggle-sidebar" href="#" data-bs-toggle="collapse" data-bs-target="#returnsSubmenu">
+                        <i class="fas fa-undo-alt"></i>
+                        <span>Returns</span>
+                        @if (ViewBag.PendingReturns > 0)
+                        {
+                            <span class="badge bg-warning text-dark ms-auto">@ViewBag.PendingReturns</span>
+                        }
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse dropdown-menu-sidebar" id="returnsSubmenu">
+                        <a class="dropdown-item-sidebar" href="@Url.Action("Index", "Returns")">
+                            <i class="fas fa-list me-2"></i> Completed Returns
+                        </a>
+                        <a class="dropdown-item-sidebar" href="@Url.Action("Index", "Sales")">
+                            <i class="fas fa-plus me-2"></i> Process New Return
+                        </a>
+                    </div>
+                </div>
+            </li>
 
-        @RenderBody()
+            <li class="menu-item">
+                <div class="dropdown">
+                    <a class="menu-link dropdown-toggle-sidebar" href="#" data-bs-toggle="collapse" data-bs-target="#productsSubmenu">
+                        <i class="fas fa-tshirt"></i>
+                        <span>Products</span>
+                        <i class="fas fa-chevron-down ms-auto"></i>
+                    </a>
+                    <div class="collapse dropdown-menu-sidebar" id="productsSubmenu">
+                        <a class="dropdown-item-sidebar" href="@Url.Action("Index", "Products")">
+                            <i class="fas fa-list me-2"></i> All Products
+                        </a>
+                        <a class="dropdown-item-sidebar" href="@Url.Action("LowStock", "Products")">
+                            <i class="fas fa-exclamation-triangle me-2"></i> Low Stock
+                        </a>
+                        <a class="dropdown-item-sidebar" href="@Url.Action("Create", "Products")">
+                            <i class="fas fa-plus me-2"></i> Add Product
+                        </a>
+                    </div>
+                </div>
+            </li>
+
+            <li class="menu-item">
+                <a class="menu-link" href="@Url.Action("Index", "Customers")">
+                    <i class="fas fa-users"></i>
+                    <span>Customers</span>
+                </a>
+            </li>
+
+            <li class="menu-item">
+                <a class="menu-link" href="@Url.Action("Index", "Categories")">
+                    <i class="fas fa-tags"></i>
+                    <span>Categories</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content Area -->
+    <main class="content-area" id="contentArea">
+        <div class="container-fluid py-4">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @RenderBody()
+        </div>
     </main>
 
     <footer class="footer">
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5><i class="fas fa-store me-2"></i>Khadi India Store Management</h5>
+                    <h5><i class="fas fa-store me-2"></i>Bhavena Khadi Bhavan</h5>
                     <p class="mb-0">Empowering traditional Indian textiles through modern technology</p>
                 </div>
                 <div class="col-md-6 text-md-end">
@@ -322,7 +713,7 @@
                         <i class="fas fa-heart text-danger me-1"></i>
                         Made in India with pride
                     </p>
-                    <small>&copy; 2025 - Khadi India Store Management</small>
+                    <small>&copy; 2025 - Bhavena Khadi Bhavan</small>
                 </div>
             </div>
         </div>
@@ -331,6 +722,51 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        $(document).ready(function() {
+            const sidebar = $('#sidebar');
+            const sidebarToggle = $('#sidebarToggle');
+            const sidebarOverlay = $('#sidebarOverlay');
+            const contentArea = $('#contentArea');
+
+            // Toggle sidebar
+            sidebarToggle.on('click', function() {
+                sidebar.toggleClass('active');
+                sidebarOverlay.toggleClass('active');
+
+                // Only shift content on large screens
+                if ($(window).width() > 991) {
+                    contentArea.toggleClass('sidebar-open');
+                }
+            });
+
+            // Close sidebar when overlay is clicked
+            sidebarOverlay.on('click', function() {
+                sidebar.removeClass('active');
+                sidebarOverlay.removeClass('active');
+                contentArea.removeClass('sidebar-open');
+            });
+
+            // Handle window resize
+            $(window).on('resize', function() {
+                if ($(window).width() <= 991) {
+                    contentArea.removeClass('sidebar-open');
+                } else if (sidebar.hasClass('active')) {
+                    contentArea.addClass('sidebar-open');
+                }
+            });
+
+            // Close sidebar on mobile when clicking menu items
+            $('.dropdown-item-sidebar, .menu-link:not(.dropdown-toggle-sidebar)').on('click', function() {
+                if ($(window).width() <= 991) {
+                    sidebar.removeClass('active');
+                    sidebarOverlay.removeClass('active');
+                }
+            });
+        });
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

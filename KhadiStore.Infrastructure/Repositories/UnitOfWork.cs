@@ -18,6 +18,7 @@ namespace KhadiStore.Infrastructure.Repositories
             Sales = new SaleRepository(_context);
             Categories = new CategoryRepository(_context);
             Purchases = new PurchaseRepository(_context);
+            Returns = new ReturnRepository(_context);
         }
 
         public IProductRepository Products { get; }
@@ -26,6 +27,7 @@ namespace KhadiStore.Infrastructure.Repositories
         public ISaleRepository Sales { get; }
         public ICategoryRepository Categories { get; }
         public IPurchaseRepository Purchases { get; }
+        public IReturnRepository Returns { get; }
 
         public async Task<int> SaveChangesAsync()
         {

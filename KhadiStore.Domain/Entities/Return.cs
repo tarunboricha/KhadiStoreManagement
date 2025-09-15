@@ -30,19 +30,23 @@ namespace KhadiStore.Domain.Entities
         public decimal GSTAmount { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal TotalAmount { get; set; }
+        public decimal DiscountAmount { get; set; } // Bill-level discount portion
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal TotalAmount { get; set; } // Total refund amount
 
         [Required]
-        public RefundMethod RefundMethod { get; set; }
+        [StringLength(50)]
+        public string RefundMethod { get; set; } = "Cash";
 
         [StringLength(100)]
         public string RefundReference { get; set; } = string.Empty;
 
         [StringLength(1000)]
-        public string Notes { get; set; } = string.Empty;
+        public string AdditionalNotes { get; set; } = string.Empty;
 
-        // Simplified - all returns are automatically completed
-        public bool IsProcessed { get; set; } = true;
+        [StringLength(20)]
+        public string Status { get; set; } = "Completed";
 
         public virtual ICollection<ReturnItem> ReturnItems { get; set; } = new List<ReturnItem>();
     }
@@ -73,7 +77,7 @@ namespace KhadiStore.Domain.Entities
         public decimal UnitPrice { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
-        public decimal DiscountAmount { get; set; }
+        public decimal DiscountAmount { get; set; } // Proportional bill-level discount
 
         [Column(TypeName = "decimal(5,2)")]
         public decimal GSTRate { get; set; }

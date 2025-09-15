@@ -7,46 +7,42 @@ namespace KhadiStore.Application.DTOs
         public int Id { get; set; }
         public string ReturnNumber { get; set; } = string.Empty;
         public int SaleId { get; set; }
-        public string SaleInvoiceNumber { get; set; } = string.Empty;
+        public SaleDto? Sale { get; set; }
         public int? CustomerId { get; set; }
-        public string CustomerName { get; set; } = string.Empty;
-        public string CustomerPhone { get; set; } = string.Empty;
+        public CustomerDto? Customer { get; set; }
         public DateTime ReturnDate { get; set; }
         public string ReturnReason { get; set; } = string.Empty;
         public decimal SubTotal { get; set; }
         public decimal GSTAmount { get; set; }
+        public decimal DiscountAmount { get; set; }
         public decimal TotalAmount { get; set; }
         public string RefundMethod { get; set; } = string.Empty;
         public string RefundReference { get; set; } = string.Empty;
-        public string Notes { get; set; } = string.Empty;
-        public int TotalItems { get; set; }
+        public string AdditionalNotes { get; set; } = string.Empty;
+        public string Status { get; set; } = "Completed";
         public DateTime CreatedAt { get; set; }
-        public bool IsProcessed { get; set; } = true; // Always true in simplified system
-        public List<ReturnItemDto> ReturnItems { get; set; } = new();
+        public List<ReturnItemDto> ReturnItems { get; set; } = new List<ReturnItemDto>();
     }
 
     // Keep CreateReturnDto as is - no changes needed
     public class CreateReturnDto
     {
-        [Required]
         public int SaleId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Return reason is required")]
         [StringLength(500, ErrorMessage = "Return reason cannot exceed 500 characters")]
         public string ReturnReason { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Refund method is required")]
         public string RefundMethod { get; set; } = "Cash";
 
-        [StringLength(100)]
-        public string RefundReference { get; set; } = string.Empty;
+        [StringLength(100, ErrorMessage = "Refund reference cannot exceed 100 characters")]
+        public string? RefundReference { get; set; }
 
-        [StringLength(1000)]
-        public string Notes { get; set; } = string.Empty;
+        [StringLength(1000, ErrorMessage = "Additional notes cannot exceed 1000 characters")]
+        public string? AdditionalNotes { get; set; }
 
-        [Required]
-        [MinLength(1, ErrorMessage = "At least one item must be selected for return")]
-        public List<CreateReturnItemDto> ReturnItems { get; set; } = new();
+        public List<CreateReturnItemDto> ReturnItems { get; set; } = new List<CreateReturnItemDto>();
     }
 
     // Keep ReturnItemDto as is - no changes needed
@@ -55,9 +51,8 @@ namespace KhadiStore.Application.DTOs
         public int Id { get; set; }
         public int ReturnId { get; set; }
         public int ProductId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
         public int SaleItemId { get; set; }
-        public int OriginalQuantity { get; set; }
+        public string ProductName { get; set; } = string.Empty;
         public int ReturnQuantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal DiscountAmount { get; set; }
@@ -78,9 +73,6 @@ namespace KhadiStore.Application.DTOs
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Return quantity must be at least 1")]
         public int ReturnQuantity { get; set; }
-
-        [Range(0, double.MaxValue, ErrorMessage = "Discount amount cannot be negative")]
-        public decimal DiscountAmount { get; set; }
     }
 
     // Updated summary DTO - simplified for immediate processing
@@ -88,10 +80,10 @@ namespace KhadiStore.Application.DTOs
     {
         public int TotalReturns { get; set; }
         public decimal TotalReturnAmount { get; set; }
-        public int PendingReturns { get; set; } = 0; // Always 0 in simplified system
-        public int CompletedReturns { get; set; } // Same as TotalReturns
+        public int PendingReturns { get; set; }
+        public int CompletedReturns { get; set; }
         public decimal AverageReturnValue { get; set; }
-        public Dictionary<string, int> ReturnReasonBreakdown { get; set; } = new();
-        public Dictionary<string, decimal> RefundMethodBreakdown { get; set; } = new();
+        public Dictionary<string, int> ReturnReasonBreakdown { get; set; } = new Dictionary<string, int>();
+        public Dictionary<string, decimal> RefundMethodBreakdown { get; set; } = new Dictionary<string, decimal>();
     }
 }

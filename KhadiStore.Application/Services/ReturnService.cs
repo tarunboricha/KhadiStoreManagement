@@ -11,18 +11,24 @@ namespace KhadiStore.Application.Services
         private readonly IReturnRepository _returnRepository;
         private readonly ISaleRepository _saleRepository;
         private readonly IProductRepository _productRepository;
+        private readonly ICustomerRepository _customerRepository;
         private readonly IMapper _mapper;
+        private readonly IUnitOfWork _unitOfWork;
 
         public ReturnService(
             IReturnRepository returnRepository,
             ISaleRepository saleRepository,
             IProductRepository productRepository,
-            IMapper mapper)
+            ICustomerRepository customerRepository,
+            IMapper mapper,
+            IUnitOfWork unitOfWork)
         {
             _returnRepository = returnRepository;
             _saleRepository = saleRepository;
             _productRepository = productRepository;
+            _customerRepository = customerRepository;
             _mapper = mapper;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<IEnumerable<ReturnDto>> GetAllReturnsAsync()
@@ -34,7 +40,7 @@ namespace KhadiStore.Application.Services
             }
             catch (Exception ex)
             {
-
+                //_logger.LogError(ex, "Error retrieving all returns");
                 throw;
             }
         }
@@ -67,20 +73,6 @@ namespace KhadiStore.Application.Services
             }
         }
 
-        public async Task<IEnumerable<ReturnDto>> GetReturnsByCustomerIdAsync(int customerId)
-        {
-            try
-            {
-                var returns = await _returnRepository.GetByCustomerIdAsync(customerId);
-                return _mapper.Map<IEnumerable<ReturnDto>>(returns);
-            }
-            catch (Exception ex)
-            {
-                //_logger.LogError(ex, "Error retrieving returns for customer {CustomerId}", customerId);
-                throw;
-            }
-        }
-
         public async Task<int> CreateReturnAsync(CreateReturnDto createReturnDto)
         {
             try
@@ -96,7 +88,7 @@ namespace KhadiStore.Application.Services
                     throw new ArgumentException("Invalid return items");
                 }
 
-                // Get the original sale - use no-tracking query to avoid conflicts
+                // Get the original sale
                 var sale = await _saleRepository.GetByIdAsync(createReturnDto.SaleId);
                 if (sale == null)
                 {
@@ -106,7 +98,14 @@ namespace KhadiStore.Application.Services
                 // Generate return number
                 var returnNumber = await _returnRepository.GenerateReturnNumberAsync();
 
-                // Create return entity - immediately processed
+                // Calculate bill-level discount percentage from original sale
+                var originalBillDiscountPercentage = 0m;
+                if (sale.SubTotal + sale.GSTAmount > 0)
+                {
+                    originalBillDiscountPercentage = (sale.DiscountAmount / (sale.SubTotal + sale.GSTAmount)) * 100;
+                }
+
+                // Create return entity
                 var returnEntity = new Return
                 {
                     ReturnNumber = returnNumber,
@@ -114,21 +113,33 @@ namespace KhadiStore.Application.Services
                     CustomerId = sale.CustomerId,
                     ReturnDate = DateTime.Now,
                     ReturnReason = createReturnDto.ReturnReason,
-                    RefundMethod = Enum.Parse<RefundMethod>(createReturnDto.RefundMethod, true),
+                    RefundMethod = createReturnDto.RefundMethod,
                     RefundReference = createReturnDto.RefundReference ?? string.Empty,
-                    Notes = createReturnDto.Notes ?? string.Empty,
-                    IsProcessed = true, // Immediately processed
+                    AdditionalNotes = createReturnDto.AdditionalNotes ?? string.Empty,
+                    Status = "Completed",
                     CreatedAt = DateTime.Now,
                     IsDeleted = false
                 };
 
-                // Process return items and calculate totals
+                // Process return items and calculate totals using proper bill-level discount logic
                 decimal subtotal = 0;
                 decimal totalGST = 0;
 
                 foreach (var itemDto in createReturnDto.ReturnItems)
                 {
                     var originalSaleItem = sale.SaleItems.First(si => si.Id == itemDto.SaleItemId);
+
+                    // Calculate line subtotal (quantity × unit price)
+                    var lineSubtotal = itemDto.ReturnQuantity * originalSaleItem.UnitPrice;
+
+                    // Calculate GST on the line subtotal
+                    var lineGST = lineSubtotal * (originalSaleItem.GSTRate / 100);
+
+                    // Calculate total before discount for this line
+                    var totalBeforeDiscount = lineSubtotal + lineGST;
+
+                    // Apply proportional bill-level discount
+                    var lineDiscountAmount = totalBeforeDiscount * (originalBillDiscountPercentage / 100);
 
                     var returnItem = new ReturnItem
                     {
@@ -137,17 +148,13 @@ namespace KhadiStore.Application.Services
                         ProductName = originalSaleItem.ProductName,
                         ReturnQuantity = itemDto.ReturnQuantity,
                         UnitPrice = originalSaleItem.UnitPrice,
-                        DiscountAmount = (originalSaleItem.DiscountAmount / originalSaleItem.Quantity) * itemDto.ReturnQuantity,
+                        DiscountAmount = lineDiscountAmount,
                         GSTRate = originalSaleItem.GSTRate,
+                        GSTAmount = lineGST,
+                        LineTotal = totalBeforeDiscount - lineDiscountAmount,
                         CreatedAt = DateTime.Now,
                         IsDeleted = false
                     };
-
-                    // Calculate line totals
-                    var lineSubtotal = (returnItem.ReturnQuantity * returnItem.UnitPrice) - returnItem.DiscountAmount;
-                    var lineGST = lineSubtotal * (returnItem.GSTRate / 100);
-                    returnItem.GSTAmount = lineGST;
-                    returnItem.LineTotal = lineSubtotal + lineGST;
 
                     subtotal += lineSubtotal;
                     totalGST += lineGST;
@@ -155,110 +162,49 @@ namespace KhadiStore.Application.Services
                     returnEntity.ReturnItems.Add(returnItem);
                 }
 
+                // Set return totals
                 returnEntity.SubTotal = subtotal;
                 returnEntity.GSTAmount = totalGST;
-                returnEntity.TotalAmount = subtotal + totalGST;
+                var totalBeforeDiscountForReturn = subtotal + totalGST;
+                returnEntity.DiscountAmount = totalBeforeDiscountForReturn * (originalBillDiscountPercentage / 100);
+                returnEntity.TotalAmount = totalBeforeDiscountForReturn - returnEntity.DiscountAmount;
 
-                // Save return first
+                // Save return
                 var savedReturn = await _returnRepository.AddAsync(returnEntity);
 
-                // Update inventory using atomic operations - SEQUENTIAL, not concurrent
+                // Update inventory for each return item
                 foreach (var returnItem in returnEntity.ReturnItems)
                 {
                     try
                     {
-                        // Use the atomic increment method to avoid DbContext conflicts
-                        var success = await _productRepository.IncrementStockAsync(returnItem.ProductId, returnItem.ReturnQuantity);
-                        
+                        await _productRepository.IncrementStockAsync(returnItem.ProductId, returnItem.ReturnQuantity);
                     }
                     catch (Exception ex)
                     {
-                        // Don't fail the entire return for inventory update issues
-                        // The return is already saved, inventory can be manually corrected
+                        // Don't fail the entire return for inventory issues
                     }
                 }
+
+                // Update customer statistics if customer exists
+                if (sale.CustomerId.HasValue)
+                {
+                    try
+                    {
+                        await UpdateCustomerStatisticsForReturnAsync(sale.CustomerId.Value, returnEntity.TotalAmount);
+                    }
+                    catch (Exception ex)
+                    {
+                        //_logger.LogError(ex, "Failed to update customer statistics for customer {CustomerId}", sale.CustomerId.Value);
+                    }
+                }
+
+                //_logger.LogInformation("Return {ReturnId} created successfully for sale {SaleId}", savedReturn.Id, createReturnDto.SaleId);
 
                 return savedReturn.Id;
             }
             catch (Exception ex)
             {
-                throw;
-            }
-        }
-
-        private async Task UpdateProductInventoryAsync(int productId, int quantityToAdd)
-        {
-            try
-            {
-                // Load product with explicit query to avoid context conflicts
-                var product = await _productRepository.GetByIdAsync(productId);
-                if (product != null)
-                {
-                    var oldQuantity = product.StockQuantity;
-                    product.StockQuantity += quantityToAdd;
-
-                    await _productRepository.UpdateAsync(product);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-        }
-
-        public async Task<IEnumerable<ReturnDto>> GetReturnsByDateRangeAsync(DateTime startDate, DateTime endDate)
-        {
-            try
-            {
-                var returns = await _returnRepository.GetByDateRangeAsync(startDate, endDate);
-                return _mapper.Map<IEnumerable<ReturnDto>>(returns);
-            }
-            catch (Exception ex)
-            {
-                //_logger.LogError(ex, "Error retrieving returns for date range {StartDate} to {EndDate}", startDate, endDate);
-                throw;
-            }
-        }
-
-        public async Task<decimal> GetTotalReturnsAmountAsync(DateTime? startDate = null, DateTime? endDate = null)
-        {
-            try
-            {
-                return await _returnRepository.GetTotalReturnsAmountAsync(startDate, endDate);
-            }
-            catch (Exception ex)
-            {
-                //_logger.LogError(ex, "Error calculating total returns amount");
-                throw;
-            }
-        }
-
-        public async Task<ReturnSummaryDto> GetReturnSummaryAsync(DateTime? startDate = null, DateTime? endDate = null)
-        {
-            try
-            {
-                var returns = startDate.HasValue && endDate.HasValue
-                    ? await GetReturnsByDateRangeAsync(startDate.Value, endDate.Value)
-                    : await GetAllReturnsAsync();
-
-                // All returns are processed, so simplified summary
-                var summary = new ReturnSummaryDto
-                {
-                    TotalReturns = returns.Count(),
-                    TotalReturnAmount = returns.Sum(r => r.TotalAmount),
-                    PendingReturns = 0, // No pending returns in simplified system
-                    CompletedReturns = returns.Count(), // All returns are completed immediately
-                    AverageReturnValue = returns.Any() ? returns.Average(r => r.TotalAmount) : 0,
-                    ReturnReasonBreakdown = returns.GroupBy(r => r.ReturnReason)
-                        .ToDictionary(g => g.Key, g => g.Count()),
-                    RefundMethodBreakdown = returns.GroupBy(r => r.RefundMethod)
-                        .ToDictionary(g => g.Key, g => g.Sum(r => r.TotalAmount))
-                };
-
-                return summary;
-            }
-            catch (Exception ex)
-            {
+                //_logger.LogError(ex, "Error creating return for sale {SaleId}", createReturnDto.SaleId);
                 throw;
             }
         }
@@ -268,17 +214,14 @@ namespace KhadiStore.Application.Services
             try
             {
                 var sale = await _saleRepository.GetByIdAsync(saleId);
-                if (sale == null)
-                    return false;
+                if (sale == null) return false;
 
                 // Check if sale is completed
-                if (sale.Status != SaleStatus.Completed)
-                    return false;
+                if (sale.Status != SaleStatus.Completed) return false;
 
                 // Check if sale is within return window (30 days)
                 var daysSinceSale = (DateTime.Now - sale.SaleDate).Days;
-                if (daysSinceSale > 30)
-                    return false;
+                if (daysSinceSale > 30) return false;
 
                 return true;
             }
@@ -303,8 +246,6 @@ namespace KhadiStore.Application.Services
                 // Get already returned quantities for this sale
                 var returnedQuantities = await _returnRepository.GetReturnedQuantitiesForSaleAsync(saleId);
 
-                //_logger.LogInformation("Validating return items for sale {SaleId}. Already returned quantities: {ReturnedQties}",saleId, string.Join(", ", returnedQuantities.Select(kv => $"SaleItem{kv.Key}:{kv.Value}")));
-
                 foreach (var returnItem in returnItems)
                 {
                     // Find the original sale item
@@ -320,8 +261,6 @@ namespace KhadiStore.Application.Services
                     var alreadyReturned = returnedQuantities.GetValueOrDefault(returnItem.SaleItemId, 0);
                     var remainingQuantity = originalQuantity - alreadyReturned;
 
-                    //_logger.LogInformation("SaleItem {SaleItemId}: Original={Original}, AlreadyReturned={Returned}, Remaining={Remaining}, Requested={Requested}",returnItem.SaleItemId, originalQuantity, alreadyReturned, remainingQuantity, returnItem.ReturnQuantity);
-
                     // Validation checks
                     if (returnItem.ReturnQuantity <= 0)
                     {
@@ -331,26 +270,17 @@ namespace KhadiStore.Application.Services
 
                     if (remainingQuantity <= 0)
                     {
-                        //_logger.LogError("Sale item {SaleItemId} is already fully returned (Original: {Original}, Returned: {Returned})", returnItem.SaleItemId, originalQuantity, alreadyReturned);
+                        //_logger.LogError("Sale item {SaleItemId} is already fully returned", returnItem.SaleItemId);
                         return false;
                     }
 
                     if (returnItem.ReturnQuantity > remainingQuantity)
                     {
-                        //_logger.LogError("Requested return quantity {Requested} exceeds remaining quantity {Remaining} for sale item {SaleItemId}", returnItem.ReturnQuantity, remainingQuantity, returnItem.SaleItemId);
-                        return false;
-                    }
-
-                    // Check if product exists
-                    var product = await _productRepository.GetByIdAsync(returnItem.ProductId);
-                    if (product == null)
-                    {
-                        //_logger.LogError("Product {ProductId} not found", returnItem.ProductId);
+                        //_logger.LogError("Requested return quantity {Requested} exceeds remaining quantity {Remaining} for sale item {SaleItemId}",returnItem.ReturnQuantity, remainingQuantity, returnItem.SaleItemId);
                         return false;
                     }
                 }
 
-                //_logger.LogInformation("All return items validation passed for sale {SaleId}", saleId);
                 return true;
             }
             catch (Exception ex)
@@ -360,14 +290,12 @@ namespace KhadiStore.Application.Services
             }
         }
 
-        // ALSO ADD this new method to get remaining quantities for UI
         public async Task<Dictionary<int, int>> GetRemainingReturnableQuantitiesAsync(int saleId)
         {
             try
             {
                 var sale = await _saleRepository.GetByIdAsync(saleId);
-                if (sale == null)
-                    return new Dictionary<int, int>();
+                if (sale == null) return new Dictionary<int, int>();
 
                 var returnedQuantities = await _returnRepository.GetReturnedQuantitiesForSaleAsync(saleId);
                 var remainingQuantities = new Dictionary<int, int>();
@@ -387,6 +315,53 @@ namespace KhadiStore.Application.Services
             {
                 //_logger.LogError(ex, "Error getting remaining returnable quantities for sale {SaleId}", saleId);
                 return new Dictionary<int, int>();
+            }
+        }
+
+        private async Task UpdateCustomerStatisticsForReturnAsync(int customerId, decimal returnAmount)
+        {
+            try
+            {
+                var customer = await _customerRepository.GetByIdAsync(customerId);
+                if (customer != null)
+                {
+                    customer.TotalOrders = Math.Max(0, customer.TotalOrders - 1);
+                    customer.TotalPurchases = Math.Max(0, customer.TotalPurchases - returnAmount);
+
+                    await _customerRepository.UpdateAsync(customer);
+                }
+            }
+            catch (Exception ex)
+            {
+                //_logger.LogError(ex, "Error updating customer statistics for return");
+                throw;
+            }
+        }
+
+        public async Task<decimal> GetTotalReturnsAmountAsync(DateTime? startDate = null, DateTime? endDate = null)
+        {
+            try
+            {
+                return await _returnRepository.GetTotalReturnsAmountAsync(startDate, endDate);
+            }
+            catch (Exception ex)
+            {
+                //_logger.LogError(ex, "Error calculating total returns amount");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<ReturnDto>> GetReturnsByDateRangeAsync(DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                var returns = await _returnRepository.GetByDateRangeAsync(startDate, endDate);
+                return _mapper.Map<IEnumerable<ReturnDto>>(returns);
+            }
+            catch (Exception ex)
+            {
+                //_logger.LogError(ex, "Error retrieving returns for date range {StartDate} to {EndDate}", startDate, endDate);
+                throw;
             }
         }
     }

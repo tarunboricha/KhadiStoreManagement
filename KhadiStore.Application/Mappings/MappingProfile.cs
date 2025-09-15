@@ -108,32 +108,62 @@ namespace KhadiStore.Application.Mappings
                 .ForMember(dest => dest.Stock, opt => opt.MapFrom(src => src.StockQuantity))
                 .ForMember(dest => dest.MinStockLevel, opt => opt.MapFrom(src => src.MinStockLevel));
 
-            // Return Entity to DTO mappings
+            // Return Entity to ReturnDto
             CreateMap<Return, ReturnDto>()
-                .ForMember(dest => dest.SaleInvoiceNumber, opt => opt.MapFrom(src => src.Sale.InvoiceNumber))
-                .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer != null ? src.Customer.Name : string.Empty))
-                .ForMember(dest => dest.CustomerPhone, opt => opt.MapFrom(src => src.Customer != null ? src.Customer.Phone : string.Empty))
-                .ForMember(dest => dest.RefundMethod, opt => opt.MapFrom(src => src.RefundMethod.ToString()))
-                .ForMember(dest => dest.TotalItems, opt => opt.MapFrom(src => src.ReturnItems.Sum(ri => ri.ReturnQuantity)));
+                .ForMember(dest => dest.Sale, opt => opt.MapFrom(src => src.Sale))
+                .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.Customer))
+                .ForMember(dest => dest.ReturnItems, opt => opt.MapFrom(src => src.ReturnItems));
 
-            // Return DTO to Entity mappings  
-            CreateMap<CreateReturnDto, Return>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.ReturnNumber, opt => opt.Ignore())
-                .ForMember(dest => dest.ReturnDate, opt => opt.MapFrom(src => DateTime.Now))
-                .ForMember(dest => dest.SubTotal, opt => opt.Ignore())
-                .ForMember(dest => dest.GSTAmount, opt => opt.Ignore())
-                .ForMember(dest => dest.TotalAmount, opt => opt.Ignore())
-                .ForMember(dest => dest.IsProcessed, opt => opt.MapFrom(src => true)) // Always processed
-                .ForMember(dest => dest.RefundMethod, opt => opt.MapFrom(src => Enum.Parse<RefundMethod>(src.RefundMethod, true)))
-                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.Now))
+            // ReturnDto to Return Entity
+            CreateMap<ReturnDto, Return>()
                 .ForMember(dest => dest.Sale, opt => opt.Ignore())
                 .ForMember(dest => dest.Customer, opt => opt.Ignore())
-                .ForMember(dest => dest.ReturnItems, opt => opt.Ignore());
+                .ForMember(dest => dest.ReturnItems, opt => opt.MapFrom(src => src.ReturnItems));
 
-            // Return Item mappings - keep as before
+            // CreateReturnDto to Return Entity
+            CreateMap<CreateReturnDto, Return>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.ReturnNumber, opt => opt.Ignore()) // Generated in service
+                .ForMember(dest => dest.ReturnDate, opt => opt.Ignore()) // Set in service
+                .ForMember(dest => dest.CustomerId, opt => opt.Ignore()) // Set from sale
+                .ForMember(dest => dest.SubTotal, opt => opt.Ignore()) // Calculated in service
+                .ForMember(dest => dest.GSTAmount, opt => opt.Ignore()) // Calculated in service
+                .ForMember(dest => dest.DiscountAmount, opt => opt.Ignore()) // Calculated in service
+                .ForMember(dest => dest.TotalAmount, opt => opt.Ignore()) // Calculated in service
+                .ForMember(dest => dest.Status, opt => opt.Ignore()) // Set in service
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore()) // Set in service
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore()) // Set in service
+                .ForMember(dest => dest.Sale, opt => opt.Ignore())
+                .ForMember(dest => dest.Customer, opt => opt.Ignore())
+                .ForMember(dest => dest.ReturnItems, opt => opt.Ignore()); // Handled separately in service
+
+            // ReturnItem Entity to ReturnItemDto
             CreateMap<ReturnItem, ReturnItemDto>()
-                .ForMember(dest => dest.OriginalQuantity, opt => opt.MapFrom(src => src.SaleItem.Quantity));
+                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.ProductName));
+
+            // ReturnItemDto to ReturnItem Entity
+            CreateMap<ReturnItemDto, ReturnItem>()
+                .ForMember(dest => dest.Product, opt => opt.Ignore())
+                .ForMember(dest => dest.SaleItem, opt => opt.Ignore())
+                .ForMember(dest => dest.Return, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore());
+
+            // CreateReturnItemDto to ReturnItem Entity
+            CreateMap<CreateReturnItemDto, ReturnItem>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.ReturnId, opt => opt.Ignore()) // Set in service
+                .ForMember(dest => dest.ProductName, opt => opt.Ignore()) // Set from original sale item
+                .ForMember(dest => dest.UnitPrice, opt => opt.Ignore()) // Set from original sale item
+                .ForMember(dest => dest.DiscountAmount, opt => opt.Ignore()) // Calculated in service
+                .ForMember(dest => dest.GSTRate, opt => opt.Ignore()) // Set from original sale item
+                .ForMember(dest => dest.GSTAmount, opt => opt.Ignore()) // Calculated in service
+                .ForMember(dest => dest.LineTotal, opt => opt.Ignore()) // Calculated in service
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore()) // Set in service
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore()) // Set in service
+                .ForMember(dest => dest.Product, opt => opt.Ignore())
+                .ForMember(dest => dest.SaleItem, opt => opt.Ignore())
+                .ForMember(dest => dest.Return, opt => opt.Ignore());
 
             CreateMap<CreateReturnItemDto, ReturnItem>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())

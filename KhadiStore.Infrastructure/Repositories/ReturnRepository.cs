@@ -1,7 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
-using KhadiStore.Domain.Entities;
+﻿using KhadiStore.Domain.Entities;
 using KhadiStore.Domain.Interfaces;
 using KhadiStore.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace KhadiStore.Infrastructure.Repositories
 {
@@ -28,6 +29,7 @@ namespace KhadiStore.Infrastructure.Repositories
             return await _dbSet
                 .Where(r => !r.IsDeleted)
                 .Include(r => r.ReturnItems)
+                    .ThenInclude(ri => ri.Product)
                 .Include(r => r.Sale)
                 .Include(r => r.Customer)
                 .OrderByDescending(r => r.ReturnDate)
@@ -75,7 +77,7 @@ namespace KhadiStore.Infrastructure.Repositories
         {
             try
             {
-                var query = _dbSet.Where(r => !r.IsDeleted && r.IsProcessed);
+                var query = _dbSet.Where(r => !r.IsDeleted && r.Status == "Completed");
 
                 if (startDate.HasValue)
                     query = query.Where(r => r.ReturnDate >= startDate.Value);
@@ -86,7 +88,7 @@ namespace KhadiStore.Infrastructure.Repositories
                 var result = await query.SumAsync(r => r.TotalAmount);
                 return result;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return 0;
             }
@@ -119,79 +121,13 @@ namespace KhadiStore.Infrastructure.Repositories
             return $"{prefix}{(todaysReturns + 1):D3}";
         }
 
-        public override async Task<Return> AddAsync(Return entity)
-        {
-            try
-            {
-                entity.CreatedAt = DateTime.Now;
-                entity.IsDeleted = false;
-
-                // Add to context
-                var result = await _dbSet.AddAsync(entity);
-
-                // Save changes immediately for this entity
-                var saveResult = await _context.SaveChangesAsync();
-
-                // Verify the entity was saved
-                if (result.Entity.Id == 0)
-                {
-                    throw new InvalidOperationException("Return was not saved - ID is still 0");
-                }
-
-                return result.Entity;
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-        }
-
-        // Also add this method to get sale with items explicitly
-        public async Task<Sale> GetSaleByIdWithItemsAsync(int saleId)
-        {
-            try
-            {
-                var sale = await _context.Sales
-                    .Include(s => s.SaleItems)
-                    .Include(s => s.Customer)
-                    .FirstOrDefaultAsync(s => s.Id == saleId && !s.IsDeleted);
-
-                return sale;
-            }
-            catch (Exception ex)
-            {
-                throw;
-            }
-        }
-
-        public async Task<int> GetReturnedQuantityForSaleItemAsync(int saleItemId)
-        {
-            try
-            {
-                // Since all returns are automatically processed, count all non-deleted returns
-                var returnedQty = await _dbSet
-                    .Where(r => !r.IsDeleted && r.IsProcessed) // All returns are processed
-                    .SelectMany(r => r.ReturnItems)
-                    .Where(ri => !ri.IsDeleted && ri.SaleItemId == saleItemId)
-                    .SumAsync(ri => ri.ReturnQuantity);
-
-                return returnedQty;
-            }
-            catch (Exception ex)
-            {
-                // Log error and return 0 as safe fallback
-                return 0;
-            }
-        }
-
         public async Task<Dictionary<int, int>> GetReturnedQuantitiesForSaleAsync(int saleId)
         {
             try
             {
-                // Use a fresh query with no tracking to avoid context conflicts
                 var returnedItems = await _context.Returns
-                    .AsNoTracking() // Critical: Don't track these entities
-                    .Where(r => !r.IsDeleted && r.SaleId == saleId && r.IsProcessed)
+                    .AsNoTracking()
+                    .Where(r => !r.IsDeleted && r.SaleId == saleId && r.Status == "Completed")
                     .SelectMany(r => r.ReturnItems)
                     .Where(ri => !ri.IsDeleted)
                     .GroupBy(ri => ri.SaleItemId)
@@ -200,9 +136,55 @@ namespace KhadiStore.Infrastructure.Repositories
 
                 return returnedItems.ToDictionary(x => x.SaleItemId, x => x.TotalReturned);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return new Dictionary<int, int>();
+            }
+        }
+
+        public async Task<int> GetReturnedQuantityForSaleItemAsync(int saleItemId)
+        {
+            try
+            {
+                var returnedQty = await _dbSet
+                    .Where(r => !r.IsDeleted && r.Status == "Completed")
+                    .SelectMany(r => r.ReturnItems)
+                    .Where(ri => !ri.IsDeleted && ri.SaleItemId == saleItemId)
+                    .SumAsync(ri => ri.ReturnQuantity);
+
+                return returnedQty;
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
+        }
+
+        public override async Task<Return> AddAsync(Return entity)
+        {
+            try
+            {
+                entity.CreatedAt = DateTime.Now;
+                entity.IsDeleted = false;
+
+                var result = await _dbSet.AddAsync(entity);
+                await _context.SaveChangesAsync();
+
+                if (result.Entity.Id == 0)
+                {
+                    throw new InvalidOperationException("Return was not saved - ID is still 0");
+                }
+
+                return result.Entity;
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
     }

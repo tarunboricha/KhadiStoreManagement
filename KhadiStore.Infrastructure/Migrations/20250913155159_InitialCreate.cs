@@ -366,11 +366,12 @@ namespace KhadiStore.Infrastructure.Migrations
                     ReturnReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     SubTotal = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     GSTAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    DiscountAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    RefundMethod = table.Column<int>(type: "int", nullable: false),
+                    RefundMethod = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     RefundReference = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    Notes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    IsProcessed = table.Column<bool>(type: "bit", nullable: false),
+                    AdditionalNotes = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedBy = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     ModifiedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -527,11 +528,11 @@ namespace KhadiStore.Infrastructure.Migrations
                 columns: new[] { "Id", "CreatedAt", "CreatedBy", "DeletedAt", "DeletedBy", "Description", "ImagePath", "IsActive", "IsDeleted", "ModifiedAt", "ModifiedBy", "Name" },
                 values: new object[,]
                 {
-                    { 1, new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3384), "System", null, null, "Pure Khadi cotton fabrics", null, true, false, null, null, "Khadi Cotton" },
-                    { 2, new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3389), "System", null, null, "Traditional silk sarees", null, true, false, null, null, "Silk Sarees" },
-                    { 3, new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3392), "System", null, null, "Traditional men's kurtas", null, true, false, null, null, "Men's Kurtas" },
-                    { 4, new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3394), "System", null, null, "Designer kurtis for women", null, true, false, null, null, "Women's Kurtis" },
-                    { 5, new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3396), "System", null, null, "Handwoven traditional fabrics", null, true, false, null, null, "Handloom" }
+                    { 1, new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8311), "System", null, null, "Pure Khadi cotton fabrics", null, true, false, null, null, "Khadi Cotton" },
+                    { 2, new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8315), "System", null, null, "Traditional silk sarees", null, true, false, null, null, "Silk Sarees" },
+                    { 3, new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8318), "System", null, null, "Traditional men's kurtas", null, true, false, null, null, "Men's Kurtas" },
+                    { 4, new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8320), "System", null, null, "Designer kurtis for women", null, true, false, null, null, "Women's Kurtis" },
+                    { 5, new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8322), "System", null, null, "Handwoven traditional fabrics", null, true, false, null, null, "Handloom" }
                 });
 
             migrationBuilder.InsertData(
@@ -539,8 +540,8 @@ namespace KhadiStore.Infrastructure.Migrations
                 columns: new[] { "Id", "Address", "City", "CreatedAt", "CreatedBy", "CustomerType", "DeletedAt", "DeletedBy", "Email", "GSTNumber", "IsActive", "IsDeleted", "ModifiedAt", "ModifiedBy", "Name", "Phone", "PinCode", "State", "TotalOrders", "TotalPurchases" },
                 values: new object[,]
                 {
-                    { 1, "123, MG Road", "Mumbai", new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3916), "System", 1, null, null, "rajesh@example.com", null, true, false, null, null, "Rajesh Kumar", "9876543210", "400001", "Maharashtra", 0, 0m },
-                    { 2, "456, Park Street", "Kolkata", new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3921), "System", 2, null, null, "priya@example.com", null, true, false, null, null, "Priya Sharma", "9876543211", "700001", "West Bengal", 0, 0m }
+                    { 1, "123, MG Road", "Mumbai", new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8735), "System", 1, null, null, "rajesh@example.com", null, true, false, null, null, "Rajesh Kumar", "9876543210", "400001", "Maharashtra", 0, 0m },
+                    { 2, "456, Park Street", "Kolkata", new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8739), "System", 2, null, null, "priya@example.com", null, true, false, null, null, "Priya Sharma", "9876543211", "700001", "West Bengal", 0, 0m }
                 });
 
             migrationBuilder.InsertData(
@@ -548,8 +549,8 @@ namespace KhadiStore.Infrastructure.Migrations
                 columns: new[] { "Id", "Address", "City", "ContactPerson", "CreatedAt", "CreatedBy", "DeletedAt", "DeletedBy", "Email", "GSTNumber", "IsActive", "IsDeleted", "ModifiedAt", "ModifiedBy", "Name", "Phone", "PinCode", "State" },
                 values: new object[,]
                 {
-                    { 1, "Khadi Gram, Sabarmati", "Ahmedabad", "Mohanlal Patel", new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3964), "System", null, null, "gujarat@khadi.com", "24ABCDE1234F1Z5", true, false, null, null, "Gujarat Khadi Bhandar", "9876543220", "380005", "Gujarat" },
-                    { 2, "Silk Market, Commercial Street", "Bangalore", "Ravi Kumar", new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3968), "System", null, null, "karnataka@silk.com", "29FGHIJ5678K2A6", true, false, null, null, "Karnataka Silk House", "9876543221", "560001", "Karnataka" }
+                    { 1, "Khadi Gram, Sabarmati", "Ahmedabad", "Mohanlal Patel", new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8778), "System", null, null, "gujarat@khadi.com", "24ABCDE1234F1Z5", true, false, null, null, "Gujarat Khadi Bhandar", "9876543220", "380005", "Gujarat" },
+                    { 2, "Silk Market, Commercial Street", "Bangalore", "Ravi Kumar", new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8782), "System", null, null, "karnataka@silk.com", "29FGHIJ5678K2A6", true, false, null, null, "Karnataka Silk House", "9876543221", "560001", "Karnataka" }
                 });
 
             migrationBuilder.InsertData(
@@ -557,11 +558,11 @@ namespace KhadiStore.Infrastructure.Migrations
                 columns: new[] { "Id", "CategoryId", "Color", "CreatedAt", "CreatedBy", "DeletedAt", "DeletedBy", "Description", "FabricType", "GST", "ImagePath", "IsActive", "IsDeleted", "MinStockLevel", "ModifiedAt", "ModifiedBy", "Name", "Origin", "Pattern", "Price", "SKU", "Size", "StockQuantity", "Weight" },
                 values: new object[,]
                 {
-                    { 1, 3, "White", new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3852), "System", null, null, "Pure white khadi cotton kurta for men", "Khadi Cotton", 5.0m, null, true, false, 10, null, null, "White Khadi Kurta", "Gujarat", "Solid", 1500m, "KH001", "L", 50, null },
-                    { 2, 2, "Red", new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3858), "System", null, null, "Traditional red silk saree with gold border", "Silk", 5.0m, null, true, false, 5, null, null, "Red Silk Saree", "Karnataka", "Border", 8500m, "SL001", null, 25, null },
-                    { 3, 4, "Blue", new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3862), "System", null, null, "Casual blue cotton kurti with prints", "Cotton", 5.0m, null, true, false, 15, null, null, "Blue Cotton Kurti", "Rajasthan", "Printed", 850m, "CT001", "M", 75, null },
-                    { 4, 5, "White", new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3866), "System", null, null, "Traditional handloom white dhoti", "Handloom Cotton", 0.0m, null, true, false, 8, null, null, "Handloom Dhoti", "Tamil Nadu", "Solid", 1200m, "HL001", null, 30, null },
-                    { 5, 1, "Green", new DateTime(2025, 9, 13, 5, 51, 52, 525, DateTimeKind.Utc).AddTicks(3870), "System", null, null, "Light green khadi dupatta with tassels", "Khadi Cotton", 5.0m, null, true, false, 10, null, null, "Green Khadi Dupatta", "West Bengal", "Plain", 650m, "KH002", null, 40, null }
+                    { 1, 3, "White", new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8590), "System", null, null, "Pure white khadi cotton kurta for men", "Khadi Cotton", 5.0m, null, true, false, 10, null, null, "White Khadi Kurta", "Gujarat", "Solid", 1500m, "KH001", "L", 50, null },
+                    { 2, 2, "Red", new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8596), "System", null, null, "Traditional red silk saree with gold border", "Silk", 5.0m, null, true, false, 5, null, null, "Red Silk Saree", "Karnataka", "Border", 8500m, "SL001", null, 25, null },
+                    { 3, 4, "Blue", new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8601), "System", null, null, "Casual blue cotton kurti with prints", "Cotton", 5.0m, null, true, false, 15, null, null, "Blue Cotton Kurti", "Rajasthan", "Printed", 850m, "CT001", "M", 75, null },
+                    { 4, 5, "White", new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8605), "System", null, null, "Traditional handloom white dhoti", "Handloom Cotton", 0.0m, null, true, false, 8, null, null, "Handloom Dhoti", "Tamil Nadu", "Solid", 1200m, "HL001", null, 30, null },
+                    { 5, 1, "Green", new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8610), "System", null, null, "Light green khadi dupatta with tassels", "Khadi Cotton", 5.0m, null, true, false, 10, null, null, "Green Khadi Dupatta", "West Bengal", "Plain", 650m, "KH002", null, 40, null }
                 });
 
             migrationBuilder.CreateIndex(

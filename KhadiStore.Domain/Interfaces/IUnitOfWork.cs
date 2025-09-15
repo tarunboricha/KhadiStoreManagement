@@ -9,6 +9,7 @@
         IPurchaseRepository Purchases { get; }
         ISaleRepository Sales { get; }
         ISupplierRepository Suppliers { get; }
+        IReturnRepository Returns { get; }
 
         // Existing methods (keep these as they are)
         Task BeginTransactionAsync();

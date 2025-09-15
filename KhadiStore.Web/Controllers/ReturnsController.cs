@@ -1,12 +1,10 @@
 ﻿using KhadiStore.Application.DTOs;
 using KhadiStore.Application.Interfaces;
 using KhadiStore.Application.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KhadiStore.Web.Controllers
 {
-    [Authorize]
     public class ReturnsController : Controller
     {
         private readonly IReturnService _returnService;
@@ -25,7 +23,7 @@ namespace KhadiStore.Web.Controllers
 
         // GET: Returns
         public async Task<IActionResult> Index(DateTime? startDate = null, DateTime? endDate = null,
-            string? refundMethod = null, int? saleId = null)
+            KhadiStore.Domain.Entities.RefundMethod? refundMethod = null, int? saleId = null)
         {
             try
             {
@@ -38,8 +36,8 @@ namespace KhadiStore.Web.Controllers
                 if (endDate.HasValue)
                     returns = returns.Where(r => r.ReturnDate.Date <= endDate.Value.Date);
 
-                if (!string.IsNullOrEmpty(refundMethod))
-                    returns = returns.Where(r => r.RefundMethod.Equals(refundMethod, StringComparison.OrdinalIgnoreCase));
+                if (refundMethod.HasValue)
+                    returns = returns.Where(r => r.RefundMethod == refundMethod.ToString());
 
                 if (saleId.HasValue)
                     returns = returns.Where(r => r.SaleId == saleId.Value);
@@ -88,9 +86,9 @@ namespace KhadiStore.Web.Controllers
                 var remainingQuantities = await _returnService.GetRemainingReturnableQuantitiesAsync(saleId);
                 ViewBag.RemainingQuantities = remainingQuantities ?? new Dictionary<int, int>();
 
-                // Check if any items are still returnable - ENSURE this is always set
+                // Check if any items are still returnable
                 var hasReturnableItems = remainingQuantities?.Values?.Any(qty => qty > 0) ?? false;
-                ViewBag.HasReturnableItems = hasReturnableItems; // CRITICAL: Always set this
+                ViewBag.HasReturnableItems = hasReturnableItems;
 
                 ViewBag.TotalItemsReturned = remainingQuantities?.Keys?.Count - (remainingQuantities?.Values?.Count(qty => qty > 0) ?? 0);
                 ViewBag.TotalItemsInSale = sale.SaleItems?.Count ?? 0;
@@ -107,19 +105,20 @@ namespace KhadiStore.Web.Controllers
                 var createReturnDto = new CreateReturnDto
                 {
                     SaleId = saleId,
-                    RefundMethod = sale.PaymentMethod ?? "Cash" // Default to Cash if null
+                    RefundMethod = sale.PaymentMethod ?? "Cash"
                 };
 
                 return View(createReturnDto);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error loading return form for sale {SaleId}", saleId);
                 TempData["Error"] = "Error loading return form. Please try again.";
                 return RedirectToAction("Index", "Sales");
             }
         }
 
-        // POST: Returns/Create - Simplified to immediate processing
+        // POST: Returns/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateReturnDto createReturnDto)
@@ -174,7 +173,7 @@ namespace KhadiStore.Web.Controllers
                     return View(createReturnDto);
                 }
 
-                // Create and immediately process the return
+                // Create and process the return
                 var returnId = await _returnService.CreateReturnAsync(createReturnDto);
 
                 TempData["Success"] = "Return has been processed successfully! Refund completed and inventory updated.";
@@ -191,7 +190,7 @@ namespace KhadiStore.Web.Controllers
             }
         }
 
-        // GET: Returns/Details/5 - Simplified for processed returns only
+        // GET: Returns/Details/5
         public async Task<IActionResult> Details(int id)
         {
             try
@@ -242,9 +241,11 @@ namespace KhadiStore.Web.Controllers
             var existingReturns = await _returnService.GetReturnsBySaleIdAsync(saleId);
             ViewBag.ExistingReturns = existingReturns.ToList();
 
-            // Add remaining quantities
             var remainingQuantities = await _returnService.GetRemainingReturnableQuantitiesAsync(saleId);
             ViewBag.RemainingQuantities = remainingQuantities;
+
+            var hasReturnableItems = remainingQuantities?.Values?.Any(qty => qty > 0) ?? false;
+            ViewBag.HasReturnableItems = hasReturnableItems;
         }
     }
 }

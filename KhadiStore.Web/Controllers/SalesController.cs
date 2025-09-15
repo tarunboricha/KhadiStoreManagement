@@ -27,18 +27,20 @@ namespace KhadiStore.Web.Controllers
             _categoryService = categoryService;
         }
 
-        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, int page = 1, int pageSize = 20)
+        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, PaymentMethod paymentMethod, int page = 1, int pageSize = 20)
         {
             IEnumerable<SaleDto> sales;
 
-            if (startDate.HasValue && endDate.HasValue)
-            {
-                sales = await _saleService.GetSalesByDateRangeAsync(startDate.Value, endDate.Value);
-            }
-            else
-            {
-                sales = await _saleService.GetAllSalesAsync();
-            }
+            sales = await _saleService.GetAllSalesAsync();
+
+            if (startDate.HasValue)
+                sales = sales.Where(r => r.SaleDate.Date >= startDate.Value.Date);
+
+            if (endDate.HasValue)
+                sales = sales.Where(r => r.SaleDate.Date <= endDate.Value.Date);
+
+            if (paymentMethod != 0)
+                sales = sales.Where(r => r.PaymentMethod == paymentMethod.ToString());
 
             var pagedSales = sales.Skip((page - 1) * pageSize).Take(pageSize);
 
@@ -46,6 +48,7 @@ namespace KhadiStore.Web.Controllers
             ViewBag.EndDate = endDate;
             ViewBag.CurrentPage = page;
             ViewBag.PageSize = pageSize;
+            ViewBag.PaymentMethod = paymentMethod;
             ViewBag.TotalItems = sales.Count();
             ViewBag.TotalPages = (int)Math.Ceiling((double)sales.Count() / pageSize);
 
