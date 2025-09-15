@@ -27,32 +27,43 @@ namespace KhadiStore.Web.Controllers
             _categoryService = categoryService;
         }
 
-        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, PaymentMethod paymentMethod, int page = 1, int pageSize = 20)
+        // UPDATED: Efficient pagination implementation
+        public async Task<IActionResult> Index(DateTime? startDate, DateTime? endDate, PaymentMethod? paymentMethod, string status = "", int page = 1, int pageSize = 20)
         {
-            IEnumerable<SaleDto> sales;
+            try
+            {
+                // Validate pagination parameters
+                if (page < 1) page = 1;
+                if (pageSize < 1 || pageSize > 100) pageSize = 20;
 
-            sales = await _saleService.GetAllSalesAsync();
+                // Get total count first (for pagination info)
+                var totalCount = await _saleService.GetSalesCountAsync(startDate, endDate, paymentMethod, status);
 
-            if (startDate.HasValue)
-                sales = sales.Where(r => r.SaleDate.Date >= startDate.Value.Date);
+                // Get paginated sales
+                var sales = await _saleService.GetPagedSalesAsync(page, pageSize, startDate, endDate, paymentMethod, status);
 
-            if (endDate.HasValue)
-                sales = sales.Where(r => r.SaleDate.Date <= endDate.Value.Date);
+                // Calculate pagination info
+                var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-            if (paymentMethod != 0)
-                sales = sales.Where(r => r.PaymentMethod == paymentMethod.ToString());
+                // Set ViewBag properties for the view
+                ViewBag.StartDate = startDate;
+                ViewBag.EndDate = endDate;
+                ViewBag.PaymentMethod = paymentMethod;
+                ViewBag.Status = status;
+                ViewBag.CurrentPage = page;
+                ViewBag.PageSize = pageSize;
+                ViewBag.TotalItems = totalCount;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.HasPreviousPage = page > 1;
+                ViewBag.HasNextPage = page < totalPages;
 
-            var pagedSales = sales.Skip((page - 1) * pageSize).Take(pageSize);
-
-            ViewBag.StartDate = startDate;
-            ViewBag.EndDate = endDate;
-            ViewBag.CurrentPage = page;
-            ViewBag.PageSize = pageSize;
-            ViewBag.PaymentMethod = paymentMethod;
-            ViewBag.TotalItems = sales.Count();
-            ViewBag.TotalPages = (int)Math.Ceiling((double)sales.Count() / pageSize);
-
-            return View(pagedSales);
+                return View(sales);
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error loading sales data. Please try again.";
+                return View(new List<SaleDto>());
+            }
         }
 
         public async Task<IActionResult> Details(int id)
@@ -76,6 +87,7 @@ namespace KhadiStore.Web.Controllers
                     ViewBag.HasReturnableItems = hasReturnableItems;
                     ViewBag.ExistingReturnsCount = existingReturns.Count();
                     ViewBag.TotalReturnedAmount = existingReturns.Sum(r => r.TotalAmount);
+                    ViewBag.HasReturns = existingReturns.Any();
                 }
 
                 return View(sale);
@@ -102,7 +114,7 @@ namespace KhadiStore.Web.Controllers
                         Text = c.Name
                     }).ToList();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     ViewBag.Categories = new List<SelectListItem>();
                 }
@@ -117,7 +129,7 @@ namespace KhadiStore.Web.Controllers
                         Text = c.Name
                     }).ToList();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     ViewBag.Customers = new List<SelectListItem>();
                 }
@@ -131,7 +143,7 @@ namespace KhadiStore.Web.Controllers
 
                 return View(model);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 TempData["Error"] = "Error loading sales form. Please try again.";
                 return RedirectToAction("Index");
@@ -143,18 +155,16 @@ namespace KhadiStore.Web.Controllers
         {
             try
             {
-                // Try to get products using your service/repository
                 var products = await _productService.GetProductsByCategoryAsync(categoryId);
-
                 var productList = products
                     .Where(p => p.StockQuantity > 0)
                     .Select(p => new
                     {
                         id = p.Id,
                         name = p.Name,
-                        price = p.Price, // Ensure it's a number
+                        price = p.Price,
                         stock = p.StockQuantity,
-                        gstRate = p.GST, // Ensure it's a number
+                        gstRate = p.GST,
                         description = p.Description ?? ""
                     })
                     .ToList();
@@ -163,11 +173,10 @@ namespace KhadiStore.Web.Controllers
             }
             catch (Exception ex)
             {
-                throw;
+                return Json(new { error = ex.Message });
             }
         }
 
-        // AJAX: Get product details - WORKING VERSION
         [HttpGet]
         public async Task<IActionResult> GetProductDetails(int productId)
         {
@@ -183,9 +192,9 @@ namespace KhadiStore.Web.Controllers
                 {
                     id = product.Id,
                     name = product.Name,
-                    price = product.Price, // Ensure it's a number
+                    price = product.Price,
                     stock = product.StockQuantity,
-                    gstRate = product.GST, // Ensure it's a number
+                    gstRate = product.GST,
                     description = product.Description ?? "",
                     category = product.CategoryName ?? ""
                 };
@@ -194,7 +203,7 @@ namespace KhadiStore.Web.Controllers
             }
             catch (Exception ex)
             {
-                throw;
+                return Json(new { error = ex.Message });
             }
         }
 
@@ -206,14 +215,14 @@ namespace KhadiStore.Web.Controllers
             {
                 try
                 {
-                    if(!string.IsNullOrWhiteSpace(createSaleDto.CustomerPhone))
+                    if (!string.IsNullOrWhiteSpace(createSaleDto.CustomerPhone))
                     {
                         createSaleDto.CustomerId = await CreateCustomerIfNeededAsync(createSaleDto.CustomerName, createSaleDto.CustomerPhone);
                     }
 
                     var sale = await _saleService.CreateSaleAsync(createSaleDto);
 
-                    // NEW: Update customer statistics after successful sale creation
+                    // Update customer statistics after successful sale creation
                     if (sale.CustomerId.HasValue)
                     {
                         await UpdateCustomerStatisticsAsync(sale.CustomerId, sale.TotalAmount);
@@ -228,8 +237,29 @@ namespace KhadiStore.Web.Controllers
                 }
             }
 
-            ViewBag.Products = await _productService.GetActiveProductsAsync();
-            ViewBag.Customers = await _customerService.GetActiveCustomersAsync();
+            // Reload ViewBag data if validation fails
+            try
+            {
+                var categories = await _categoryService.GetAllCategoriesAsync();
+                ViewBag.Categories = categories.Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.Name
+                }).ToList();
+
+                var customers = await _customerService.GetAllCustomersAsync();
+                ViewBag.Customers = customers.Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.Name
+                }).ToList();
+            }
+            catch
+            {
+                ViewBag.Categories = new List<SelectListItem>();
+                ViewBag.Customers = new List<SelectListItem>();
+            }
+
             return View(createSaleDto);
         }
 
@@ -248,10 +278,9 @@ namespace KhadiStore.Web.Controllers
                 // Update customer statistics
                 await _customerService.UpdateCustomerStatisticsAsync(customerId.Value, saleAmount);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Log the error but don't fail the sale creation
-                // You can add logging here if needed
                 // Just continue - customer stats update failure shouldn't break the sale
             }
         }
@@ -282,7 +311,6 @@ namespace KhadiStore.Web.Controllers
                 };
 
                 var newCustomer = await _customerService.CreateCustomerAsync(customer);
-
                 return newCustomer.Id;
             }
             catch
@@ -299,41 +327,54 @@ namespace KhadiStore.Web.Controllers
             {
                 return NotFound();
             }
-
             return View(sale);
         }
 
         [HttpGet]
         public async Task<IActionResult> GetProductPrice(int productId)
         {
-            var product = await _productService.GetProductByIdAsync(productId);
-            if (product != null)
+            try
             {
-                return Json(new
+                var product = await _productService.GetProductByIdAsync(productId);
+                if (product != null)
                 {
-                    price = product.Price,
-                    gst = product.GST,
-                    stock = product.StockQuantity,
-                    name = product.Name
-                });
+                    return Json(new
+                    {
+                        price = product.Price,
+                        gst = product.GST,
+                        stock = product.StockQuantity,
+                        name = product.Name
+                    });
+                }
+                return Json(new { price = 0, gst = 5, stock = 0, name = "" });
             }
-            return Json(new { price = 0, gst = 5, stock = 0, name = "" });
+            catch (Exception)
+            {
+                return Json(new { price = 0, gst = 5, stock = 0, name = "" });
+            }
         }
 
         [HttpGet]
         public async Task<IActionResult> GetCustomerByPhone(string phone)
         {
-            var customer = await _customerService.GetCustomerByPhoneAsync(phone);
-            if (customer != null)
+            try
             {
-                return Json(new
+                var customer = await _customerService.GetCustomerByPhoneAsync(phone);
+                if (customer != null)
                 {
-                    id = customer.Id,
-                    name = customer.Name,
-                    email = customer.Email
-                });
+                    return Json(new
+                    {
+                        id = customer.Id,
+                        name = customer.Name,
+                        email = customer.Email
+                    });
+                }
+                return Json(new { id = 0, name = "", email = "" });
             }
-            return Json(new { id = 0, name = "", email = "" });
+            catch (Exception)
+            {
+                return Json(new { id = 0, name = "", email = "" });
+            }
         }
     }
 }

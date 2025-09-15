@@ -171,7 +171,7 @@
                                             @if (!string.IsNullOrEmpty(sale.CustomerPhone))
                                             {
                                                 <br>
-                                
+
                                                 <small class="text-muted">@sale.CustomerPhone</small>
                                             }
                                         </div>
@@ -197,7 +197,7 @@
                                         @if (sale.DiscountAmount > 0)
                                         {
                                             <br>
-                                
+
                                             <small class="text-danger">-₹@sale.DiscountAmount.ToString("N0") disc</small>
                                         }
                                     </div>
@@ -258,15 +258,12 @@
                                            target="_blank">
                                             <i class="fas fa-print"></i>
                                         </a>
-                                        @if (sale.Status == "Completed")
-                                        {
-                                            <button type="button"
-                                                    class="btn btn-outline-warning"
-                                                    onclick="duplicateSale(@sale.Id)"
-                                                    title="Duplicate Sale">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
-                                        }
+                                        <a href="@Url.Action("Create", "Returns", new { saleId = sale.Id })"
+                                           class="btn btn-outline-success"
+                                           title="Return"
+                                           target="_blank">
+                                            <i class="fas fa-undo-alt me-1"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
@@ -287,6 +284,142 @@
             </div>
         }
     </div>
+    <!-- Pagination Controls -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="mb-0 text-muted">
+                            Showing @((ViewBag.CurrentPage - 1) * ViewBag.PageSize + 1) to
+                            @Math.Min(ViewBag.CurrentPage * ViewBag.PageSize, ViewBag.TotalItems)
+                            of @ViewBag.TotalItems entries
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <nav aria-label="Sales pagination">
+                            <ul class="pagination justify-content-end mb-0">
+                                <!-- First Page -->
+                                @if (ViewBag.CurrentPage > 1)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" href="@GetPageUrl(1)">
+                                            <i class="fas fa-angle-double-left"></i>
+                                        </a>
+                                    </li>
+                                }
+
+                                <!-- Previous Page -->
+                                @if (ViewBag.HasPreviousPage)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" href="@GetPageUrl(ViewBag.CurrentPage - 1)">
+                                            <i class="fas fa-angle-left"></i> Previous
+                                        </a>
+                                    </li>
+                                }
+
+                                <!-- Page Numbers -->
+                                @{
+                                    int startPage = Math.Max(1, ViewBag.CurrentPage - 2);
+                                    int endPage = Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2);
+                                }
+
+                                @if (startPage > 1)
+                                {
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                }
+
+                                @for (int i = startPage; i <= endPage; i++)
+                                {
+                                    <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                        <a class="page-link" href="@GetPageUrl(i)">@i</a>
+                                    </li>
+                                }
+
+                                @if (endPage < ViewBag.TotalPages)
+                                {
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                }
+
+                                <!-- Next Page -->
+                                @if (ViewBag.HasNextPage)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" href="@GetPageUrl(ViewBag.CurrentPage + 1)">
+                                            Next <i class="fas fa-angle-right"></i>
+                                        </a>
+                                    </li>
+                                }
+
+                                <!-- Last Page -->
+                                @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" href="@GetPageUrl(ViewBag.TotalPages)">
+                                            <i class="fas fa-angle-double-right"></i>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Page Size Selector -->
+    <div class="card mt-2">
+        <div class="card-body py-2">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <label class="form-label me-2 mb-0">Show:</label>
+                        <select class="form-select form-select-sm" style="width: 90px; min-width: 90px; padding-right: 2rem;" onchange="changePageSize(this.value)">
+                            <option value="10" selected="@(ViewBag.PageSize == 10)" )>10</option>
+                            <option value="20" selected="@(ViewBag.PageSize == 20)" )>20</option>
+                            <option value="50" selected="@(ViewBag.PageSize == 50)" )>50</option>
+                            <option value="100" selected="@(ViewBag.PageSize == 100)" )>100</option>
+                        </select>
+                        <span class="ms-2 text-muted">entries per page</span>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">Total Records: @ViewBag.TotalItems</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @{
+        string GetPageUrl(int pageNumber)
+        {
+            var queryParams = new List<string>();
+
+            queryParams.Add($"page={pageNumber}");
+            queryParams.Add($"pageSize={ViewBag.PageSize}");
+
+            if (ViewBag.StartDate != null)
+                queryParams.Add($"startDate={ViewBag.StartDate:yyyy-MM-dd}");
+
+            if (ViewBag.EndDate != null)
+                queryParams.Add($"endDate={ViewBag.EndDate:yyyy-MM-dd}");
+
+            if (ViewBag.PaymentMethod != null && !string.IsNullOrEmpty(ViewBag.PaymentMethod.ToString()))
+                queryParams.Add($"paymentMethod={ViewBag.PaymentMethod}");
+
+            if (!string.IsNullOrEmpty(ViewBag.Status?.ToString()))
+                queryParams.Add($"status={ViewBag.Status}");
+
+            return Url.Action("Index") + "?" + string.Join("&", queryParams);
+        }
+    }
 </div>
 
 @if (Model.Any())
@@ -342,6 +475,15 @@
 
 @section Scripts {
     <script>
+
+        // Add these new functions for pagination
+        function changePageSize(pageSize) {
+            const url = new URL(window.location);
+            url.searchParams.set('pageSize', pageSize);
+            url.searchParams.set('page', '1'); // Reset to first page
+            window.location.href = url.toString();
+        }
+
         function setDateRange(range) {
             const today = new Date();
             let startDate, endDate;
@@ -366,7 +508,26 @@
 
             $('input[name="startDate"]').val(startDate);
             $('input[name="endDate"]').val(endDate);
+
+            // Reset to first page when changing filters
+            const form = $('form[method="get"]');
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'page',
+                value: '1'
+            }).appendTo(form);
         }
+
+        // Add page reset to form submission
+        $('form[method="get"]').on('submit', function() {
+            // Reset to first page when filtering
+            $(this).find('input[name="page"]').remove();
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'page',
+                value: '1'
+            }).appendTo(this);
+        });
 
         function exportToCSV() {
             let csv = 'Invoice Number,Customer Name,Customer Phone,Sale Date,Total Items,Total Amount,Payment Method,Status\n';

@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace KhadiStore.Infrastructure.Migrations
 {
     [DbContext(typeof(KhadiStoreDbContext))]
-    [Migration("20250913155159_InitialCreate")]
+    [Migration("20250915060855_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -85,7 +85,7 @@ namespace KhadiStore.Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8311),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4169),
                             CreatedBy = "System",
                             Description = "Pure Khadi cotton fabrics",
                             IsActive = true,
@@ -95,7 +95,7 @@ namespace KhadiStore.Infrastructure.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8315),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4173),
                             CreatedBy = "System",
                             Description = "Traditional silk sarees",
                             IsActive = true,
@@ -105,7 +105,7 @@ namespace KhadiStore.Infrastructure.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8318),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4176),
                             CreatedBy = "System",
                             Description = "Traditional men's kurtas",
                             IsActive = true,
@@ -115,7 +115,7 @@ namespace KhadiStore.Infrastructure.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8320),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4178),
                             CreatedBy = "System",
                             Description = "Designer kurtis for women",
                             IsActive = true,
@@ -125,7 +125,7 @@ namespace KhadiStore.Infrastructure.Migrations
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8322),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4181),
                             CreatedBy = "System",
                             Description = "Handwoven traditional fabrics",
                             IsActive = true,
@@ -222,7 +222,7 @@ namespace KhadiStore.Infrastructure.Migrations
                             Id = 1,
                             Address = "123, MG Road",
                             City = "Mumbai",
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8735),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4643),
                             CreatedBy = "System",
                             CustomerType = 1,
                             Email = "rajesh@example.com",
@@ -240,7 +240,7 @@ namespace KhadiStore.Infrastructure.Migrations
                             Id = 2,
                             Address = "456, Park Street",
                             City = "Kolkata",
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8739),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4648),
                             CreatedBy = "System",
                             CustomerType = 2,
                             Email = "priya@example.com",
@@ -362,7 +362,7 @@ namespace KhadiStore.Infrastructure.Migrations
                             Id = 1,
                             CategoryId = 3,
                             Color = "White",
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8590),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4578),
                             CreatedBy = "System",
                             Description = "Pure white khadi cotton kurta for men",
                             FabricType = "Khadi Cotton",
@@ -383,7 +383,7 @@ namespace KhadiStore.Infrastructure.Migrations
                             Id = 2,
                             CategoryId = 2,
                             Color = "Red",
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8596),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4585),
                             CreatedBy = "System",
                             Description = "Traditional red silk saree with gold border",
                             FabricType = "Silk",
@@ -403,7 +403,7 @@ namespace KhadiStore.Infrastructure.Migrations
                             Id = 3,
                             CategoryId = 4,
                             Color = "Blue",
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8601),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4590),
                             CreatedBy = "System",
                             Description = "Casual blue cotton kurti with prints",
                             FabricType = "Cotton",
@@ -424,7 +424,7 @@ namespace KhadiStore.Infrastructure.Migrations
                             Id = 4,
                             CategoryId = 5,
                             Color = "White",
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8605),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4595),
                             CreatedBy = "System",
                             Description = "Traditional handloom white dhoti",
                             FabricType = "Handloom Cotton",
@@ -444,7 +444,7 @@ namespace KhadiStore.Infrastructure.Migrations
                             Id = 5,
                             CategoryId = 1,
                             Color = "Green",
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8610),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4599),
                             CreatedBy = "System",
                             Description = "Light green khadi dupatta with tassels",
                             FabricType = "Khadi Cotton",
@@ -1015,7 +1015,7 @@ namespace KhadiStore.Infrastructure.Migrations
                             Address = "Khadi Gram, Sabarmati",
                             City = "Ahmedabad",
                             ContactPerson = "Mohanlal Patel",
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8778),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4695),
                             CreatedBy = "System",
                             Email = "gujarat@khadi.com",
                             GSTNumber = "24ABCDE1234F1Z5",
@@ -1032,7 +1032,7 @@ namespace KhadiStore.Infrastructure.Migrations
                             Address = "Silk Market, Commercial Street",
                             City = "Bangalore",
                             ContactPerson = "Ravi Kumar",
-                            CreatedAt = new DateTime(2025, 9, 13, 15, 51, 59, 27, DateTimeKind.Utc).AddTicks(8782),
+                            CreatedAt = new DateTime(2025, 9, 15, 6, 8, 55, 137, DateTimeKind.Utc).AddTicks(4699),
                             CreatedBy = "System",
                             Email = "karnataka@silk.com",
                             GSTNumber = "29FGHIJ5678K2A6",

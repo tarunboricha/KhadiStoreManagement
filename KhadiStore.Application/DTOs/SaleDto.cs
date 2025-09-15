@@ -66,6 +66,18 @@ namespace KhadiStore.Application.DTOs
         public decimal BillDiscountPercentage { get; set; } = 0;
     }
 
+    public class SalesFilterDto
+    {
+        public DateTime? StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+        public PaymentMethod? PaymentMethod { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 20;
+        public string? CustomerName { get; set; }
+        public string? InvoiceNumber { get; set; }
+    }
+
     public class CreateSaleItemDto
     {
         [Required]

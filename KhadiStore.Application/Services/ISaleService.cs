@@ -1,4 +1,5 @@
 ﻿using KhadiStore.Application.DTOs;
+using KhadiStore.Domain.Entities;
 
 namespace KhadiStore.Application.Services
 {
@@ -14,5 +15,10 @@ namespace KhadiStore.Application.Services
         Task<string> GenerateInvoiceNumberAsync();
         Task<SalesChartDto> GetSalesChartDataAsync(int days = 7);
         Task<IEnumerable<SaleDto>> GetRecentSalesAsync(int count = 10);
+
+        // NEW: Add these pagination methods
+        Task<IEnumerable<SaleDto>> GetPagedSalesAsync(int page, int pageSize, DateTime? startDate = null, DateTime? endDate = null, PaymentMethod? paymentMethod = null, string status = "");
+        Task<int> GetSalesCountAsync(DateTime? startDate = null, DateTime? endDate = null, PaymentMethod? paymentMethod = null, string status = "");
+        Task<PagedResult<SaleDto>> GetPagedSalesWithFiltersAsync(SalesFilterDto filters);
     }
 }

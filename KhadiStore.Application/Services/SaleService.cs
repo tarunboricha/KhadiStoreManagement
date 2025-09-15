@@ -2,8 +2,6 @@
 using KhadiStore.Application.DTOs;
 using KhadiStore.Domain.Entities;
 using KhadiStore.Domain.Interfaces;
-using System.Numerics;
-using System.Xml.Linq;
 
 namespace KhadiStore.Application.Services
 {
@@ -18,6 +16,7 @@ namespace KhadiStore.Application.Services
             _mapper = mapper;
         }
 
+        // EXISTING METHODS (keep these as they are)
         public async Task<IEnumerable<SaleDto>> GetAllSalesAsync()
         {
             var sales = await _unitOfWork.Sales.GetAllAsync();
@@ -54,7 +53,6 @@ namespace KhadiStore.Application.Services
             sale.InvoiceNumber = await GenerateInvoiceNumberAsync();
             sale.CreatedAt = DateTime.UtcNow;
 
-
             // Calculate totals
             decimal subTotal = 0;
             decimal gstTotal = 0;
@@ -85,11 +83,10 @@ namespace KhadiStore.Application.Services
 
             sale.SubTotal = subTotal;
             sale.GSTAmount = gstTotal;
-            sale.DiscountAmount =  (subTotal + gstTotal) * createSaleDto.BillDiscountPercentage / 100;
+            sale.DiscountAmount = (subTotal + gstTotal) * createSaleDto.BillDiscountPercentage / 100;
             sale.TotalAmount = subTotal + gstTotal - sale.DiscountAmount;
 
             var createdSale = await _unitOfWork.Sales.AddAsync(sale);
-
             await _unitOfWork.SaveChangesAsync();
 
             return _mapper.Map<SaleDto>(createdSale);
@@ -131,6 +128,61 @@ namespace KhadiStore.Application.Services
         {
             var sales = await _unitOfWork.Sales.GetRecentSalesAsync(count);
             return _mapper.Map<IEnumerable<SaleDto>>(sales);
+        }
+
+        // NEW: Pagination methods implementation
+        public async Task<IEnumerable<SaleDto>> GetPagedSalesAsync(int page, int pageSize, DateTime? startDate = null, DateTime? endDate = null, PaymentMethod? paymentMethod = null, string status = "")
+        {
+            try
+            {
+                // Validate pagination parameters
+                if (page < 1) page = 1;
+                if (pageSize < 1 || pageSize > 100) pageSize = 20;
+
+                var sales = await _unitOfWork.Sales.GetPagedAsync(page, pageSize, startDate, endDate, paymentMethod, status);
+                return _mapper.Map<IEnumerable<SaleDto>>(sales);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving paged sales: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<int> GetSalesCountAsync(DateTime? startDate = null, DateTime? endDate = null, PaymentMethod? paymentMethod = null, string status = "")
+        {
+            try
+            {
+                return await _unitOfWork.Sales.GetCountAsync(startDate, endDate, paymentMethod, status);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error getting sales count: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<PagedResult<SaleDto>> GetPagedSalesWithFiltersAsync(SalesFilterDto filters)
+        {
+            try
+            {
+                // Validate pagination parameters
+                if (filters.Page < 1) filters.Page = 1;
+                if (filters.PageSize < 1 || filters.PageSize > 100) filters.PageSize = 20;
+
+                var totalCount = await GetSalesCountAsync(filters.StartDate, filters.EndDate, filters.PaymentMethod, filters.Status);
+                var sales = await GetPagedSalesAsync(filters.Page, filters.PageSize, filters.StartDate, filters.EndDate, filters.PaymentMethod, filters.Status);
+
+                return new PagedResult<SaleDto>
+                {
+                    Items = sales,
+                    TotalCount = totalCount,
+                    PageNumber = filters.Page,
+                    PageSize = filters.PageSize
+                };
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error retrieving filtered sales: {ex.Message}", ex);
+            }
         }
     }
 }

@@ -39,9 +39,6 @@
                     </a>
                 }
             }
-            <a href="@Url.Action("Create")" class="btn btn-success">
-                <i class="fas fa-plus me-1"></i> New Sale
-            </a>
         </div>
     </div>
 </div>
@@ -295,13 +292,6 @@
                     <h5 class="mb-0 text-white">
                         <i class="fas fa-shopping-cart me-2"></i>Items Purchased | खरीदे गए आइटम
                     </h5>
-                    @if (Model.Status == "Completed")
-                    {
-                        <a href="@Url.Action("Create", "Returns", new { saleId = Model.Id })"
-                           class="btn btn-warning btn-sm return-btn">
-                            <i class="fas fa-undo-alt me-1"></i> Process Return
-                        </a>
-                    }
                 </div>
             </div>
             <div class="card-body p-0">
@@ -392,26 +382,6 @@
                         </strong>
                         <strong class="fs-4 text-primary">₹@Model.TotalAmount.ToString("N2")</strong>
                     </div>
-                </div>
-
-                <div class="action-buttons mt-4 d-grid gap-2">
-                    <a href="@Url.Action("Invoice", new { id = Model.Id })"
-                       class="btn btn-primary" target="_blank">
-                        <i class="fas fa-print me-1"></i> Print Invoice
-                    </a>
-                    @if (Model.Status == "Completed")
-                    {
-                        <a href="@Url.Action("Create", "Returns", new { saleId = Model.Id })"
-                           class="btn btn-warning return-btn">
-                            <i class="fas fa-undo-alt me-1"></i> Process Return
-                        </a>
-                    }
-                    <a href="@Url.Action("Create")" class="btn btn-success">
-                        <i class="fas fa-plus me-1"></i> Create New Sale
-                    </a>
-                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
-                        <i class="fas fa-list me-1"></i> View All Sales
-                    </a>
                 </div>
             </div>
         </div>
