@@ -1,0 +1,18 @@
+# render.yaml
+
+services:
+  - type: web
+    name: khadistore
+    env: dotnet
+    plan: free   # free tier
+    region: oregon  # or choose region closest to you / available
+    branch: master  # or main if that is your branch
+    buildCommand: "dotnet publish KhadiStore.Web/Khadistore.Web.csproj -c Release -o out"
+    startCommand: "dotnet out/KhadiStore.Web.dll"
+    envVars:
+      # set appsettings environment variables here
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      # Database connection string (you will need to map to Render's Postgres or other)
+      - key: ConnectionStrings__DefaultConnection
+        value: "Host=${DATABASE_HOST};Port=${DATABASE_PORT};Database=${DATABASE_NAME};Username=${DATABASE_USER};Password=${DATABASE_PASSWORD}"
