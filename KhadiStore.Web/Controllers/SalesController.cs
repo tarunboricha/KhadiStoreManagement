@@ -104,7 +104,7 @@ namespace KhadiStore.Web.Controllers
         {
             try
             {
-                // Load categories - with proper error handling
+                // Load categories
                 try
                 {
                     var categories = await _categoryService.GetAllCategoriesAsync();
@@ -119,7 +119,7 @@ namespace KhadiStore.Web.Controllers
                     ViewBag.Categories = new List<SelectListItem>();
                 }
 
-                // Load customers - with proper error handling  
+                // Load customers
                 try
                 {
                     var customers = await _customerService.GetAllCustomersAsync();
@@ -137,8 +137,10 @@ namespace KhadiStore.Web.Controllers
                 var model = new CreateSaleDto
                 {
                     SaleDate = DateTime.Now,
-                    PaymentMethod = KhadiStore.Domain.Entities.PaymentMethod.Cash,
-                    SaleItems = new List<CreateSaleItemDto>()
+                    PaymentMethod = PaymentMethod.Cash,
+                    SaleItems = new List<CreateSaleItemDto>(),
+                    EnableRounding = true, // Default to enabled
+                    RoundingMethod = RoundingMethod.RoundDown // Your specific requirement
                 };
 
                 return View(model);
@@ -149,6 +151,86 @@ namespace KhadiStore.Web.Controllers
                 return RedirectToAction("Index");
             }
         }
+
+        // NEW: Update sale status action
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStatus(int saleId, string newStatus, string? reason = null)
+        {
+            try
+            {
+                var canChange = await _saleService.CanChangeStatusAsync(saleId, newStatus);
+                if (!canChange)
+                {
+                    TempData["Error"] = "Cannot change sale status. Invalid status transition.";
+                    return RedirectToAction("Details", new { id = saleId });
+                }
+
+                var success = await _saleService.UpdateSaleStatusAsync(saleId, newStatus, reason);
+                if (success)
+                {
+                    TempData["Success"] = $"Sale status updated to {newStatus} successfully.";
+                }
+                else
+                {
+                    TempData["Error"] = "Failed to update sale status. Please try again.";
+                }
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error updating sale status: " + ex.Message;
+            }
+
+            return RedirectToAction("Details", new { id = saleId });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CalculateRoundedAmount(decimal amount, RoundingMethod method)
+        {
+            try
+            {
+                var roundedAmount = await _saleService.CalculateRoundedAmount(amount, method);
+                var roundingDifference = roundedAmount - amount;
+
+                return Json(new
+                {
+                    originalAmount = amount,
+                    roundedAmount = roundedAmount,
+                    roundingDifference = roundingDifference,
+                    formattedOriginal = amount.ToString("N2"),
+                    formattedRounded = roundedAmount.ToString("N2"),
+                    formattedDifference = roundingDifference.ToString("N2")
+                });
+            }
+            catch (Exception)
+            {
+                return Json(new
+                {
+                    originalAmount = amount,
+                    roundedAmount = amount,
+                    roundingDifference = 0,
+                    formattedOriginal = amount.ToString("N2"),
+                    formattedRounded = amount.ToString("N2"),
+                    formattedDifference = "0.00"
+                });
+            }
+        }
+
+        // NEW: AJAX method to check if status can be changed
+        [HttpGet]
+        public async Task<IActionResult> CanChangeStatus(int saleId, string newStatus)
+        {
+            try
+            {
+                var canChange = await _saleService.CanChangeStatusAsync(saleId, newStatus);
+                return Json(new { canChange = canChange });
+            }
+            catch (Exception)
+            {
+                return Json(new { canChange = false });
+            }
+        }
+
 
         [HttpGet]
         public async Task<IActionResult> GetProductsByCategory(int categoryId)

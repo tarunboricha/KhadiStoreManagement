@@ -39,6 +39,9 @@
                     </a>
                 }
             }
+            <a href="@Url.Action("Create")" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i> New Sale
+            </a>
         </div>
     </div>
 </div>
@@ -76,9 +79,34 @@
         <!-- Sale Information -->
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header" style="background: linear-gradient(135deg, #138808 0%, #28a745 100%);">
-                <h5 class="mb-0 text-white">
-                    <i class="fas fa-info-circle me-2"></i>Sale Information | बिक्री जानकारी
-                </h5>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-info-circle me-2"></i>Sale Information | बिक्री जानकारी
+                    </h5>
+                    <!-- NEW: Status Change Controls -->
+                    @if (Model.CanChangeStatus)
+                    {
+                        <div class="dropdown">
+                            <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-edit me-1"></i> Change Status
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                @foreach (var status in Model.AvailableStatuses)
+                                {
+                                    @if (status != Model.Status)
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" href="#" onclick="changeStatus('@status')">
+                                                <i class="fas fa-@(status == "Completed" ? "check" : status == "Cancelled" ? "times" : "clock") me-2"></i>
+                                                @status
+                                            </a>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -93,7 +121,6 @@
                                     </div>
                                 </div>
                             </div>
-
                             <div class="info-item mb-3">
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-calendar fa-2x text-info me-3"></i>
@@ -103,7 +130,6 @@
                                     </div>
                                 </div>
                             </div>
-
                             <div class="info-item">
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-flag fa-2x text-success me-3"></i>
@@ -137,7 +163,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="col-lg-6">
                         <div class="sale-info-grid">
                             <div class="info-item mb-3">
@@ -150,22 +175,18 @@
                                             {
                                                 case "Cash":
                                                     <i class="fas fa-money-bill-wave text-success me-1"></i>
-                                            
                                                     <text>Cash</text>
                                                     break;
                                                 case "Card":
                                                     <i class="fas fa-credit-card text-primary me-1"></i>
-                                            
                                                     <text>Card</text>
                                                     break;
                                                 case "UPI":
                                                     <i class="fas fa-mobile-alt text-info me-1"></i>
-                                            
                                                     <text>UPI</text>
                                                     break;
                                                 default:
                                                     <i class="fas fa-rupee-sign me-1"></i>
-                                            
                                                     <text>@Model.PaymentMethod</text>
                                                     break;
                                             }
@@ -173,7 +194,6 @@
                                     </div>
                                 </div>
                             </div>
-
                             @if (!string.IsNullOrWhiteSpace(Model.PaymentReference))
                             {
                                 <div class="info-item mb-3">
@@ -186,7 +206,6 @@
                                     </div>
                                 </div>
                             }
-
                             <div class="info-item">
                                 <div class="d-flex align-items-center">
                                     <i class="fas fa-boxes fa-2x text-warning me-3"></i>
@@ -199,7 +218,6 @@
                         </div>
                     </div>
                 </div>
-
                 @if (!string.IsNullOrWhiteSpace(Model.Notes))
                 {
                     <div class="mt-4 pt-3 border-top">
@@ -247,7 +265,6 @@
                                             }
                                         </div>
                                     </div>
-
                                     @if (!string.IsNullOrWhiteSpace(Model.CustomerPhone))
                                     {
                                         <div>
@@ -292,6 +309,13 @@
                     <h5 class="mb-0 text-white">
                         <i class="fas fa-shopping-cart me-2"></i>Items Purchased | खरीदे गए आइटम
                     </h5>
+                    @if (Model.Status == "Completed")
+                    {
+                        <a href="@Url.Action("Create", "Returns", new { saleId = Model.Id })"
+                           class="btn btn-warning btn-sm return-btn">
+                            <i class="fas fa-undo-alt me-1"></i> Process Return
+                        </a>
+                    }
                 </div>
             </div>
             <div class="card-body p-0">
@@ -375,13 +399,48 @@
                             <span class="fw-semibold">- ₹@Model.DiscountAmount.ToString("N2")</span>
                         </div>
                     }
+
+                    <!-- NEW: Show calculated total and rounding -->
+                    @if (Model.HasRounding)
+                    {
+                        <hr class="my-2">
+                        <div class="summary-item d-flex justify-content-between py-2">
+                            <span><i class="fas fa-calculator text-secondary me-2"></i>Calculated Total:</span>
+                            <span class="fw-semibold">₹@Model.CalculatedTotal.ToString("N2")</span>
+                        </div>
+                        <div class="summary-item d-flex justify-content-between py-2 @(Model.RoundingAmount >= 0 ? "text-success" : "text-danger")">
+                            <span><i class="fas fa-coins me-2"></i>Rounding Adjustment:</span>
+                            <span class="fw-semibold">@(Model.RoundingAmount >= 0 ? "+" : "")₹@Model.RoundingAmount.ToString("N2")</span>
+                        </div>
+                    }
+
                     <hr class="my-3">
                     <div class="summary-item d-flex justify-content-between py-2">
                         <strong class="fs-5 text-primary">
-                            <i class="fas fa-rupee-sign me-2"></i>Grand Total:
+                            <i class="fas fa-rupee-sign me-2"></i>@(Model.HasRounding ? "Final" : "Grand") Total:
                         </strong>
                         <strong class="fs-4 text-primary">₹@Model.TotalAmount.ToString("N2")</strong>
                     </div>
+                </div>
+
+                <div class="action-buttons mt-4 d-grid gap-2">
+                    <a href="@Url.Action("Invoice", new { id = Model.Id })"
+                       class="btn btn-primary" target="_blank">
+                        <i class="fas fa-print me-1"></i> Print Invoice
+                    </a>
+                    @if (Model.Status == "Completed")
+                    {
+                        <a href="@Url.Action("Create", "Returns", new { saleId = Model.Id })"
+                           class="btn btn-warning return-btn">
+                            <i class="fas fa-undo-alt me-1"></i> Process Return
+                        </a>
+                    }
+                    <a href="@Url.Action("Create")" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i> Create New Sale
+                    </a>
+                    <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-1"></i> View All Sales
+                    </a>
                 </div>
             </div>
         </div>
@@ -408,7 +467,6 @@
                         </div>
                     </div>
                 </div>
-
                 @if (Model.Status == "Completed")
                 {
                     <hr class="my-3">
@@ -456,7 +514,6 @@
                             </div>
                         </div>
                     }
-
                     <div class="mt-3 d-grid">
                         <a href="@Url.Action("Index", "Returns", new { saleId = Model.Id })"
                            class="btn btn-outline-primary btn-sm">
@@ -466,6 +523,44 @@
                 </div>
             </div>
         }
+    </div>
+</div>
+
+<!-- Status Change Modal -->
+<div class="modal fade" id="statusChangeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Sale Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="statusChangeForm" method="post" action="@Url.Action("UpdateStatus")">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="saleId" value="@Model.Id">
+                <input type="hidden" name="newStatus" id="newStatus">
+
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        You are about to change the status of sale <strong>@Model.InvoiceNumber</strong>
+                        from <strong>@Model.Status</strong> to <strong id="newStatusDisplay"></strong>.
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="statusReason" class="form-label">Reason for Status Change (Optional)</label>
+                        <textarea name="reason" id="statusReason" class="form-control" rows="3"
+                                  placeholder="Enter reason for changing the status..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Update Status
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -481,7 +576,6 @@
             $('.return-btn').on('click', function(e) {
                 const saleAmount = '@Model.TotalAmount.ToString("N2")';
                 const invoiceNumber = '@Model.InvoiceNumber';
-
                 Swal.fire({
                     title: 'Process Return?',
                     html: `
@@ -508,7 +602,6 @@
                         e.preventDefault();
                     }
                 });
-
                 e.preventDefault();
             });
 
@@ -521,6 +614,28 @@
 
             // Initialize tooltips
             $('[title]').tooltip();
+        });
+
+        // NEW: Status change functionality
+        function changeStatus(newStatus) {
+            $('#newStatus').val(newStatus);
+            $('#newStatusDisplay').text(newStatus);
+            $('#statusChangeModal').modal('show');
+        }
+
+        // Form submission with confirmation
+        $('#statusChangeForm').on('submit', function(e) {
+            const newStatus = $('#newStatus').val();
+            const reason = $('#statusReason').val();
+
+            if (!reason && (newStatus === 'Cancelled' || newStatus === 'Pending')) {
+                if (!confirm('Are you sure you want to change the status without providing a reason?')) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+
+            return true;
         });
     </script>
 

@@ -20,5 +20,10 @@ namespace KhadiStore.Application.Services
         Task<IEnumerable<SaleDto>> GetPagedSalesAsync(int page, int pageSize, DateTime? startDate = null, DateTime? endDate = null, PaymentMethod? paymentMethod = null, string status = "");
         Task<int> GetSalesCountAsync(DateTime? startDate = null, DateTime? endDate = null, PaymentMethod? paymentMethod = null, string status = "");
         Task<PagedResult<SaleDto>> GetPagedSalesWithFiltersAsync(SalesFilterDto filters);
+
+        // NEW: Rounding and status methods
+        Task<decimal> CalculateRoundedAmount(decimal amount, RoundingMethod method = RoundingMethod.NearestTen);
+        Task<bool> UpdateSaleStatusAsync(int saleId, string newStatus, string? reason = null);
+        Task<bool> CanChangeStatusAsync(int saleId, string newStatus);
     }
 }

@@ -47,6 +47,7 @@ namespace KhadiStore.Application.Services
             return _mapper.Map<IEnumerable<SaleDto>>(sales);
         }
 
+        // UPDATED: CreateSaleAsync with rounding functionality
         public async Task<SaleDto> CreateSaleAsync(CreateSaleDto createSaleDto)
         {
             var sale = _mapper.Map<Sale>(createSaleDto);
@@ -84,12 +85,103 @@ namespace KhadiStore.Application.Services
             sale.SubTotal = subTotal;
             sale.GSTAmount = gstTotal;
             sale.DiscountAmount = (subTotal + gstTotal) * createSaleDto.BillDiscountPercentage / 100;
-            sale.TotalAmount = subTotal + gstTotal - sale.DiscountAmount;
+
+            // Calculate total before rounding
+            var calculatedTotal = subTotal + gstTotal - sale.DiscountAmount;
+            sale.CalculatedTotal = calculatedTotal;
+
+            // Apply rounding if enabled
+            if (createSaleDto.EnableRounding)
+            {
+                var roundedAmount = await CalculateRoundedAmount(calculatedTotal, createSaleDto.RoundingMethod);
+                sale.TotalAmount = roundedAmount;
+                sale.RoundingAmount = roundedAmount - calculatedTotal;
+            }
+            else
+            {
+                sale.TotalAmount = calculatedTotal;
+                sale.RoundingAmount = 0;
+            }
 
             var createdSale = await _unitOfWork.Sales.AddAsync(sale);
             await _unitOfWork.SaveChangesAsync();
 
             return _mapper.Map<SaleDto>(createdSale);
+        }
+
+        // NEW: Calculate rounded amount based on method
+        public async Task<decimal> CalculateRoundedAmount(decimal amount, RoundingMethod method = RoundingMethod.NearestTen)
+        {
+            return method switch
+            {
+                RoundingMethod.None => amount,
+                RoundingMethod.NearestFive => Math.Round(amount / 5, 0, MidpointRounding.AwayFromZero) * 5,
+                RoundingMethod.NearestTen => Math.Round(amount / 10, 0, MidpointRounding.AwayFromZero) * 10,
+                RoundingMethod.RoundDown => Math.Floor(amount / 10) * 10, // Your specific requirement: 1002->1000, 1017->1010
+                _ => amount
+            };
+        }
+
+        // NEW: Update sale status
+        public async Task<bool> UpdateSaleStatusAsync(int saleId, string newStatus, string? reason = null)
+        {
+            try
+            {
+                var sale = await _unitOfWork.Sales.GetByIdAsync(saleId);
+                if (sale == null)
+                    return false;
+
+                // Validate status change
+                if (!await CanChangeStatusAsync(saleId, newStatus))
+                    return false;
+
+                // Parse and validate new status
+                if (!Enum.TryParse<SaleStatus>(newStatus, true, out var saleStatus))
+                    return false;
+
+                // Update status
+                sale.Status = saleStatus;
+
+                // Add reason to notes if provided
+                if (!string.IsNullOrWhiteSpace(reason))
+                {
+                    var statusChangeNote = $"\n[{DateTime.Now:yyyy-MM-dd HH:mm}] Status changed to {newStatus}. Reason: {reason}";
+                    sale.Notes = (sale.Notes ?? "") + statusChangeNote;
+                }
+
+                await _unitOfWork.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        // NEW: Check if status can be changed
+        public async Task<bool> CanChangeStatusAsync(int saleId, string newStatus)
+        {
+            var sale = await _unitOfWork.Sales.GetByIdAsync(saleId);
+            if (sale == null)
+                return false;
+
+            // Cannot change status if already returned
+            if (sale.Status == SaleStatus.Returned)
+                return false;
+
+            // Parse new status
+            if (!Enum.TryParse<SaleStatus>(newStatus, true, out var targetStatus))
+                return false;
+
+            // Business rules for status changes
+            return sale.Status switch
+            {
+                SaleStatus.Pending => targetStatus is SaleStatus.Completed or SaleStatus.Cancelled or SaleStatus.Pending,
+                SaleStatus.Completed => targetStatus is SaleStatus.Cancelled or SaleStatus.Completed,
+                SaleStatus.Cancelled => targetStatus is SaleStatus.Pending or SaleStatus.Cancelled,
+                SaleStatus.Returned => false, // Cannot change returned status
+                _ => false
+            };
         }
 
         public async Task<decimal> GetTotalSalesAsync(DateTime? startDate = null, DateTime? endDate = null)

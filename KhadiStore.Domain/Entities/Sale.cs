@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// Updated Sale.cs entity - Add rounding fields
+using System.ComponentModel.DataAnnotations;
 
 namespace KhadiStore.Domain.Entities
 {
@@ -25,8 +26,12 @@ namespace KhadiStore.Domain.Entities
 
         public decimal GSTAmount { get; set; } = 0;
 
+        // NEW: Rounding fields
+        public decimal RoundingAmount { get; set; } = 0;
+        public decimal CalculatedTotal { get; set; } = 0; // Total before rounding
+
         [Required]
-        public decimal TotalAmount { get; set; }
+        public decimal TotalAmount { get; set; } // Final amount after rounding
 
         public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Cash;
 
@@ -44,6 +49,7 @@ namespace KhadiStore.Domain.Entities
 
         // Computed Properties
         public int TotalItems => SaleItems.Sum(si => si.Quantity);
+        public bool HasRounding => RoundingAmount != 0;
     }
 
     public enum PaymentMethod

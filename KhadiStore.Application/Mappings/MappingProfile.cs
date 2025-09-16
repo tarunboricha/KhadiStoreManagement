@@ -68,38 +68,43 @@ namespace KhadiStore.Application.Mappings
                 .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
                 .ForMember(dest => dest.Purchases, opt => opt.Ignore());
 
-            // Sale Mappings
+            // Sale mappings
             CreateMap<Sale, SaleDto>()
                 .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.PaymentMethod.ToString()))
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-                .ForMember(dest => dest.TotalItems, opt => opt.MapFrom(src => src.TotalItems))
-                .ForMember(dest => dest.SaleItems, opt => opt.MapFrom(src => src.SaleItems));
+                .ForMember(dest => dest.TotalItems, opt => opt.MapFrom(src => src.SaleItems.Sum(si => si.Quantity)));
 
             CreateMap<CreateSaleDto, Sale>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
                 .ForMember(dest => dest.InvoiceNumber, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+                .ForMember(dest => dest.Customer, opt => opt.Ignore())
                 .ForMember(dest => dest.SubTotal, opt => opt.Ignore())
                 .ForMember(dest => dest.GSTAmount, opt => opt.Ignore())
                 .ForMember(dest => dest.TotalAmount, opt => opt.Ignore())
-                .ForMember(dest => dest.Status, opt => opt.MapFrom(src => SaleStatus.Completed))
-                .ForMember(dest => dest.Customer, opt => opt.Ignore());
+                .ForMember(dest => dest.DiscountAmount, opt => opt.Ignore())
+                // NEW: Map rounding fields
+                .ForMember(dest => dest.RoundingAmount, opt => opt.Ignore())
+                .ForMember(dest => dest.CalculatedTotal, opt => opt.Ignore());
 
-            // Sale Item Mappings
+            // Sale item mappings
             CreateMap<SaleItem, SaleItemDto>()
-                .ForMember(dest => dest.LineTotal, opt => opt.MapFrom(src => src.LineTotal));
+                .ForMember(dest => dest.LineTotal, opt => opt.MapFrom(src => src.TotalAmount));
 
             CreateMap<CreateSaleItemDto, SaleItem>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.SaleId, opt => opt.Ignore())
                 .ForMember(dest => dest.ProductName, opt => opt.Ignore())
                 .ForMember(dest => dest.UnitPrice, opt => opt.Ignore())
+                .ForMember(dest => dest.DiscountAmount, opt => opt.Ignore())
                 .ForMember(dest => dest.GSTRate, opt => opt.Ignore())
                 .ForMember(dest => dest.GSTAmount, opt => opt.Ignore())
                 .ForMember(dest => dest.TotalAmount, opt => opt.Ignore())
+                .ForMember(dest => dest.Product, opt => opt.Ignore())
                 .ForMember(dest => dest.Sale, opt => opt.Ignore())
-                .ForMember(dest => dest.Product, opt => opt.Ignore());
+                .ForMember(dest => dest.SaleId, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.IsDeleted, opt => opt.Ignore());
 
             // Dashboard Mappings
             CreateMap<Product, LowStockProductDto>()

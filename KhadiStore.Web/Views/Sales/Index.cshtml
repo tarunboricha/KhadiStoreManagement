@@ -19,7 +19,7 @@
 
 <!-- Quick Stats -->
 @{
-    var totalSales = Model.Sum(s => s.TotalAmount);
+    var totalSales = Model.Where(s => s.Status == "Completed").Sum(s => s.TotalAmount);
     var totalOrders = Model.Count();
     var avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
     var todaysSales = Model.Where(s => s.SaleDate.Date == DateTime.Today).Sum(s => s.TotalAmount);
