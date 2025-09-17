@@ -1,0 +1,600 @@
+﻿@model KhadiStore.Application.DTOs.UpdateSupplierDto
+@{
+    ViewData["Title"] = "Edit Supplier";
+}
+
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="page-title">
+            <i class="fas fa-edit me-2 text-warning"></i>
+            Edit Supplier - @Model.Name
+            <small class="text-muted fs-6 ms-2">| आपूर्तिकर्ता संपादित करें</small>
+        </h1>
+    </div>
+    <div class="col-auto">
+        <div class="btn-group">
+            <a href="@Url.Action("Details", new { id = Model.Id })" class="btn btn-outline-info">
+                <i class="fas fa-eye me-1"></i> View Details
+            </a>
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Suppliers
+            </a>
+        </div>
+    </div>
+</div>
+
+<form asp-action="Edit" method="post" id="supplierEditForm" novalidate>
+    <input asp-for="Id" type="hidden">
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Basic Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-info-circle me-2"></i>Basic Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label asp-for="Name" class="form-label required">
+                                    <i class="fas fa-building text-primary me-1"></i>Supplier Name
+                                </label>
+                                <input asp-for="Name" class="form-control" placeholder="Enter supplier company name">
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="IsActive" class="form-label">
+                                    <i class="fas fa-toggle-on text-success me-1"></i>Status
+                                </label>
+                                <div class="form-check form-switch mt-2">
+                                    <input asp-for="IsActive" class="form-check-input" type="checkbox">
+                                    <label asp-for="IsActive" class="form-check-label">
+                                        Active Supplier
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="ContactPerson" class="form-label">
+                                    <i class="fas fa-user text-info me-1"></i>Contact Person
+                                </label>
+                                <input asp-for="ContactPerson" class="form-control" placeholder="Name of primary contact">
+                                <span asp-validation-for="ContactPerson" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="GSTNumber" class="form-label">
+                                    <i class="fas fa-file-invoice text-warning me-1"></i>GST Number
+                                </label>
+                                <input asp-for="GSTNumber" class="form-control text-uppercase" placeholder="27AAECE4239R1ZB" maxlength="15">
+                                <span asp-validation-for="GSTNumber" class="text-danger"></span>
+                                <div class="form-text">Format: 15-digit GST number (optional)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-address-book me-2"></i>Contact Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Phone" class="form-label">
+                                    <i class="fas fa-phone text-success me-1"></i>Phone Number
+                                </label>
+                                <input asp-for="Phone" class="form-control" placeholder="Enter phone number" maxlength="15">
+                                <span asp-validation-for="Phone" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="Email" class="form-label">
+                                    <i class="fas fa-envelope text-info me-1"></i>Email Address
+                                </label>
+                                <input asp-for="Email" type="email" class="form-control" placeholder="Enter email address">
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-map-marker-alt me-2"></i>Address Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Address" class="form-label required">
+                            <i class="fas fa-home text-primary me-1"></i>Street Address
+                        </label>
+                        <textarea asp-for="Address" class="form-control" rows="3" placeholder="Enter complete address"></textarea>
+                        <span asp-validation-for="Address" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="City" class="form-label">
+                                    <i class="fas fa-city text-info me-1"></i>City
+                                </label>
+                                <input asp-for="City" class="form-control" placeholder="Enter city">
+                                <span asp-validation-for="City" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="State" class="form-label">
+                                    <i class="fas fa-map text-warning me-1"></i>State
+                                </label>
+                                <input asp-for="State" class="form-control" placeholder="Enter state">
+                                <span asp-validation-for="State" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label asp-for="PinCode" class="form-label">
+                                    <i class="fas fa-mail-bulk text-secondary me-1"></i>Pin Code
+                                </label>
+                                <input asp-for="PinCode" class="form-control" placeholder="Enter 6-digit pin" maxlength="6">
+                                <span asp-validation-for="PinCode" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Form Actions -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-cogs me-2"></i>Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-warning btn-lg" id="updateBtn">
+                            <i class="fas fa-save me-1"></i> Update Supplier
+                        </button>
+                        <a href="@Url.Action("Details", new { id = Model.Id })" class="btn btn-outline-info">
+                            <i class="fas fa-eye me-1"></i> View Details
+                        </a>
+                        <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Cancel Changes
+                        </a>
+                        <button type="button" class="btn btn-outline-warning" onclick="resetForm()">
+                            <i class="fas fa-undo me-1"></i> Reset Form
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Guidelines -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 text-dark">
+                        <i class="fas fa-info-circle me-2"></i>Update Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Supplier name must be unique</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>GST number format: 15 characters</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Phone number should be valid</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Pin code must be 6 digits</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                            <small>Deactivating will hide from purchase forms</small>
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-info text-info me-2"></i>
+                            <small>Fields marked with * are required</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Change Log -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 text-dark">
+                        <i class="fas fa-history me-2"></i>Recent Changes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="change-log">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small text-muted">
+                                <i class="fas fa-user me-1"></i>Last Modified
+                            </span>
+                            <span class="small fw-semibold">You</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small text-muted">
+                                <i class="fas fa-clock me-1"></i>Modified Date
+                            </span>
+                            <span class="small fw-semibold">Now</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            initializeFormValidation();
+            initializeFormFeatures();
+            trackFormChanges();
+        });
+
+        let originalFormData = {};
+
+        function initializeFormValidation() {
+            // Real-time validation
+            $('#supplierEditForm input, #supplierEditForm textarea').on('blur', function() {
+                validateField($(this));
+            });
+
+            // Supplier name uniqueness check (excluding current supplier)
+            $('input[name="Name"]').on('blur', function() {
+                const name = $(this).val().trim();
+                if (name.length > 0) {
+                    checkSupplierExists(name, @Model.Id);
+                }
+            });
+
+            // GST number uniqueness check (excluding current supplier)
+            $('input[name="GSTNumber"]').on('blur', function() {
+                const gstNumber = $(this).val().trim();
+                if (gstNumber.length > 0) {
+                    checkGSTExists(gstNumber, @Model.Id);
+                }
+            });
+
+            // Form submission validation
+            $('#supplierEditForm').on('submit', function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    showValidationSummary();
+                }
+            });
+        }
+
+        function initializeFormFeatures() {
+            // Auto-format GST number
+            $('input[name="GSTNumber"]').on('input', function() {
+                $(this).val($(this).val().toUpperCase());
+            });
+
+            // Pin code validation
+            $('input[name="PinCode"]').on('input', function() {
+                $(this).val($(this).val().replace(/\D/g, '').substring(0, 6));
+            });
+
+            // Phone number formatting
+            $('input[name="Phone"]').on('input', function() {
+                $(this).val($(this).val().replace(/\D/g, '').substring(0, 15));
+            });
+        }
+
+        function trackFormChanges() {
+            // Store original form data
+            $('#supplierEditForm input, #supplierEditForm textarea, #supplierEditForm select').each(function() {
+                const field = $(this);
+                if (field.attr('type') === 'checkbox') {
+                    originalFormData[field.attr('name')] = field.is(':checked');
+                } else {
+                    originalFormData[field.attr('name')] = field.val();
+                }
+            });
+
+            // Track changes
+            $('#supplierEditForm input, #supplierEditForm textarea, #supplierEditForm select').on('input change', function() {
+                updateChangeIndicator();
+            });
+        }
+
+        function updateChangeIndicator() {
+            let hasChanges = false;
+            
+            $('#supplierEditForm input, #supplierEditForm textarea, #supplierEditForm select').each(function() {
+                const field = $(this);
+                const fieldName = field.attr('name');
+                let currentValue;
+                
+                if (field.attr('type') === 'checkbox') {
+                    currentValue = field.is(':checked');
+                } else {
+                    currentValue = field.val();
+                }
+                
+                if (originalFormData[fieldName] !== currentValue) {
+                    hasChanges = true;
+                    return false; // Break loop
+                }
+            });
+
+            if (hasChanges) {
+                $('#updateBtn').removeClass('btn-warning').addClass('btn-success');
+                $('#updateBtn').html('<i class="fas fa-save me-1"></i> Save Changes');
+            } else {
+                $('#updateBtn').removeClass('btn-success').addClass('btn-warning');
+                $('#updateBtn').html('<i class="fas fa-save me-1"></i> Update Supplier');
+            }
+        }
+
+        function validateField(field) {
+            const fieldName = field.attr('name');
+            const value = field.val().trim();
+            let isValid = true;
+            let message = '';
+
+            switch (fieldName) {
+                case 'Name':
+                    if (value.length === 0) {
+                        isValid = false;
+                        message = 'Supplier name is required.';
+                    } else if (value.length > 200) {
+                        isValid = false;
+                        message = 'Supplier name cannot exceed 200 characters.';
+                    }
+                    break;
+
+                case 'Address':
+                    if (value.length === 0) {
+                        isValid = false;
+                        message = 'Address is required.';
+                    } else if (value.length > 500) {
+                        isValid = false;
+                        message = 'Address cannot exceed 500 characters.';
+                    }
+                    break;
+
+                case 'Phone':
+                    if (value.length > 0) {
+                        if (value.length < 10) {
+                            isValid = false;
+                            message = 'Phone number should be at least 10 digits.';
+                        }
+                    }
+                    break;
+
+                case 'PinCode':
+                    if (value.length > 0) {
+                        if (value.length !== 6 || !/^\d{6}$/.test(value)) {
+                            isValid = false;
+                            message = 'Pin code must be exactly 6 digits.';
+                        }
+                    }
+                    break;
+
+                case 'GSTNumber':
+                    if (value.length > 0) {
+                        const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+                        if (!gstRegex.test(value)) {
+                            isValid = false;
+                            message = 'Please enter a valid GST number format.';
+                        }
+                    }
+                    break;
+            }
+
+            updateFieldValidation(field, isValid, message);
+            return isValid;
+        }
+
+        function updateFieldValidation(field, isValid, message) {
+            const errorSpan = field.siblings('.text-danger');
+            
+            field.removeClass('is-valid is-invalid');
+            
+            if (isValid) {
+                field.addClass('is-valid');
+                errorSpan.text('');
+            } else {
+                field.addClass('is-invalid');
+                errorSpan.text(message);
+            }
+        }
+
+        function validateForm() {
+            let isValid = true;
+            
+            $('#supplierEditForm input[required], #supplierEditForm textarea[required]').each(function() {
+                if (!validateField($(this))) {
+                    isValid = false;
+                }
+            });
+
+            return isValid;
+        }
+
+        function showValidationSummary() {
+            const errors = [];
+            $('.text-danger').each(function() {
+                const errorText = $(this).text().trim();
+                if (errorText.length > 0) {
+                    errors.push(errorText);
+                }
+            });
+
+            if (errors.length > 0) {
+                Swal.fire({
+                    title: 'Validation Errors',
+                    html: '<ul class="text-start"><li>' + errors.join('</li><li>') + '</li></ul>',
+                    icon: 'error',
+                    confirmButtonText: 'Fix Errors',
+                    confirmButtonColor: '#FF6B35'
+                });
+            }
+        }
+
+        function checkSupplierExists(name, excludeId) {
+            $.get('@Url.Action("CheckSupplierExists", "Suppliers")', { name: name, excludeId: excludeId })
+                .done(function(result) {
+                    const nameField = $('input[name="Name"]');
+                    if (result.exists) {
+                        updateFieldValidation(nameField, false, 'A supplier with this name already exists.');
+                    } else {
+                        updateFieldValidation(nameField, true, '');
+                    }
+                });
+        }
+
+        function checkGSTExists(gstNumber, excludeId) {
+            $.get('@Url.Action("CheckGSTExists", "Suppliers")', { gstNumber: gstNumber, excludeId: excludeId })
+                .done(function(result) {
+                    const gstField = $('input[name="GSTNumber"]');
+                    if (result.exists) {
+                        updateFieldValidation(gstField, false, 'A supplier with this GST number already exists.');
+                    } else {
+                        updateFieldValidation(gstField, true, '');
+                    }
+                });
+        }
+
+        function resetForm() {
+            Swal.fire({
+                title: 'Reset Form?',
+                text: 'This will restore all fields to their original values. Unsaved changes will be lost.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#FF6B35',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Reset Form',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Reset form to original values
+                    Object.keys(originalFormData).forEach(function(fieldName) {
+                        const field = $(`[name="${fieldName}"]`);
+                        if (field.attr('type') === 'checkbox') {
+                            field.prop('checked', originalFormData[fieldName]);
+                        } else {
+                            field.val(originalFormData[fieldName]);
+                        }
+                    });
+                    
+                    // Clear validation states
+                    $('.is-valid, .is-invalid').removeClass('is-valid is-invalid');
+                    $('.text-danger').text('');
+                    
+                    updateChangeIndicator();
+                }
+            });
+        }
+
+        // Warn user about unsaved changes when leaving page
+        window.addEventListener('beforeunload', function(e) {
+            let hasChanges = false;
+            
+            $('#supplierEditForm input, #supplierEditForm textarea, #supplierEditForm select').each(function() {
+                const field = $(this);
+                const fieldName = field.attr('name');
+                let currentValue;
+                
+                if (field.attr('type') === 'checkbox') {
+                    currentValue = field.is(':checked');
+                } else {
+                    currentValue = field.val();
+                }
+                
+                if (originalFormData[fieldName] !== currentValue) {
+                    hasChanges = true;
+                    return false;
+                }
+            });
+
+            if (hasChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .required::after {
+            content: " *";
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .form-control:focus {
+            border-color: #FF6B35;
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+        }
+        
+        .form-control.is-valid {
+            border-color: #28a745;
+        }
+        
+        .form-control.is-valid:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        
+        .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+        
+        .form-control.is-invalid:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+        
+        .card {
+            transition: transform 0.2s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .change-log {
+            font-size: 0.875rem;
+        }
+    </style>
+}

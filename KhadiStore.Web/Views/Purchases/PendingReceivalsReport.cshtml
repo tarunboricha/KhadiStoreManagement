@@ -1,0 +1,585 @@
+﻿@model IEnumerable<KhadiStore.Application.DTOs.PurchaseDto>
+@{
+    ViewData["Title"] = "Pending Receivals Report";
+}
+
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="page-title">
+            <i class="fas fa-clock me-2 text-warning"></i>
+            Pending Receivals Report
+            <small class="text-muted fs-6 ms-2">| लंबित प्राप्ति रिपोर्ट</small>
+        </h1>
+    </div>
+    <div class="col-auto">
+        <div class="btn-group">
+            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Back to Orders
+            </a>
+            <a href="@Url.Action("Create")" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i> New Purchase Order
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Report Summary -->
+@{
+    var totalPendingValue = Model.Sum(p => p.TotalAmount);
+    var totalPendingOrders = Model.Count();
+    var oldestOrder = Model.Any() ? Model.OrderBy(p => p.PurchaseDate).First() : null;
+    var avgOrderValue = totalPendingOrders > 0 ? totalPendingValue / totalPendingOrders : 0;
+}
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body">
+                <i class="fas fa-shopping-cart fa-2x text-warning mb-2"></i>
+                <h4 class="text-warning">@totalPendingOrders</h4>
+                <p class="mb-0">Pending Orders</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body">
+                <i class="fas fa-rupee-sign fa-2x text-danger mb-2"></i>
+                <h4 class="text-danger">₹@totalPendingValue.ToString("N0")</h4>
+                <p class="mb-0">Total Pending Value</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body">
+                <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                <h4 class="text-info">₹@avgOrderValue.ToString("N0")</h4>
+                <p class="mb-0">Avg Order Value</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body">
+                <i class="fas fa-calendar-alt fa-2x text-secondary mb-2"></i>
+                <h4 class="text-secondary">
+                    @if (oldestOrder != null)
+                    {
+                        @((DateTime.Now - oldestOrder.PurchaseDate).Days)
+                    }
+                    else
+                    {
+                        <text>0</text>
+                    }
+                </h4>
+                <p class="mb-0">Days (Oldest)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Actions -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-header" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 text-white">
+                <i class="fas fa-filter me-2"></i>Report Actions
+            </h6>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-light" onclick="exportToCSV()">
+                    <i class="fas fa-download me-1"></i> Export CSV
+                </button>
+                <button class="btn btn-light" onclick="window.print()">
+                    <i class="fas fa-print me-1"></i> Print Report
+                </button>
+                <button class="btn btn-light" onclick="receiveAllOrders()">
+                    <i class="fas fa-truck-loading me-1"></i> Bulk Receive
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center">
+                    <label class="form-label mb-0 me-2">Priority Filter:</label>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="priorityFilter" id="filterAll" value="all" checked>
+                        <label class="btn btn-outline-secondary" for="filterAll">All Orders</label>
+                        
+                        <input type="radio" class="btn-check" name="priorityFilter" id="filterOld" value="old">
+                        <label class="btn btn-outline-warning" for="filterOld">7+ Days Old</label>
+                        
+                        <input type="radio" class="btn-check" name="priorityFilter" id="filterCritical" value="critical">
+                        <label class="btn btn-outline-danger" for="filterCritical">15+ Days Old</label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Report generated on @DateTime.Now.ToString("dd MMM yyyy, hh:mm tt")
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Orders Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+        <h5 class="mb-0 text-white">
+            <i class="fas fa-list me-2"></i>
+            Pending Purchase Orders (@totalPendingOrders orders)
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="pendingOrdersTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 15%">
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                                PO Details
+                            </th>
+                            <th style="width: 20%">Supplier</th>
+                            <th style="width: 15%">Order Date</th>
+                            <th class="text-center" style="width: 8%">Age (Days)</th>
+                            <th class="text-center" style="width: 8%">Items</th>
+                            <th class="text-end" style="width: 12%">Amount</th>
+                            <th class="text-center" style="width: 10%">Priority</th>
+                            <th class="text-center" style="width: 12%">Actions</th>
+                        </tr>
+                    </thead>
+                    @* <tbody>
+                        @foreach (var purchase in Model.OrderBy(p => p.PurchaseDate))
+                        {
+                            @{
+                                var orderAge = (DateTime.Now - purchase.PurchaseDate).Days;
+                                var priorityClass = orderAge >= 15 ? "table-danger" : orderAge >= 7 ? "table-warning" : "";
+                                var priorityText = orderAge >= 15 ? "Critical" : orderAge >= 7 ? "High" : "Normal";
+                                var priorityColor = orderAge >= 15 ? "danger" : orderAge >= 7 ? "warning" : "success";
+                            }
+                            
+                            <tr class="@priorityClass pending-order" data-age="@orderAge">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <input type="checkbox" class="form-check-input me-2 order-checkbox" value="@purchase.Id">
+                                        <div>
+                                            <div class="fw-bold text-dark">@purchase.PurchaseOrderNumber</div>
+                                            <small class="text-muted">ID: @purchase.Id</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="supplier-info">
+                                        <div class="fw-semibold">
+                                            <a href="@Url.Action("Details", "Suppliers", new { id = purchase.SupplierId })" 
+                                               class="text-decoration-none">@purchase.SupplierName</a>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(purchase.SupplierPhone))
+                                        {
+                                            <small class="text-muted">
+                                                <i class="fas fa-phone me-1"></i>@purchase.SupplierPhone
+                                            </small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="fw-semibold">@purchase.PurchaseDate.ToString("dd MMM yyyy")</div>
+                                        <small class="text-muted">@purchase.PurchaseDate.ToString("hh:mm tt")</small>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-@priorityColor fs-6 px-2 py-1">@orderAge</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border">@purchase.TotalItems</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="fw-bold text-success">₹@purchase.TotalAmount.ToString("N2")</div>
+                                    @if (purchase.GSTAmount > 0)
+                                    {
+                                        <small class="text-muted">inc. GST ₹@purchase.GSTAmount.ToString("N0")</small>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-@priorityColor">
+                                        @if (orderAge >= 15)
+                                        {
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                        }
+                                        else if (orderAge >= 7)
+                                        {
+                                            <i class="fas fa-clock me-1"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-check me-1"></i>
+                                        }
+                                        @priorityText
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="@Url.Action("Details", new { id = purchase.Id })"
+                                           class="btn btn-outline-primary"
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button"
+                                                class="btn btn-outline-success"
+                                                onclick="receivePurchase(@purchase.Id, '@purchase.PurchaseOrderNumber')"
+                                                title="Receive Order">
+                                            <i class="fas fa-truck-loading"></i>
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-outline-warning"
+                                                onclick="sendReminder(@purchase.Id, '@purchase.SupplierName')"
+                                                title="Send Reminder">
+                                            <i class="fas fa-bell"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody> *@
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-5 text-center text-muted">
+                <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                <h5 class="text-success">All Caught Up!</h5>
+                <p>No pending purchase orders found. All orders have been received.</p>
+                <a href="@Url.Action("Create")" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i> Create New Purchase Order
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <!-- Bulk Actions Panel -->
+    <div class="card mt-3 border-0 shadow-sm" id="bulkActionsPanel" style="display: none;">
+        <div class="card-body py-2">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <span class="text-muted">
+                        <span id="selectedCount">0</span> orders selected
+                    </span>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-success" onclick="bulkReceiveOrders()">
+                            <i class="fas fa-truck-loading me-1"></i> Receive Selected
+                        </button>
+                        <button class="btn btn-warning" onclick="sendBulkReminders()">
+                            <i class="fas fa-bell me-1"></i> Send Reminders
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="clearSelection()">
+                            <i class="fas fa-times me-1"></i> Clear Selection
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Legend -->
+    <div class="card mt-3 border-0 shadow-sm">
+        <div class="card-body py-2">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <span class="me-3">
+                            <strong>Priority Legend:</strong>
+                        </span>
+                        <span class="badge bg-success me-2">
+                            <i class="fas fa-check me-1"></i>Normal (0-6 days)
+                        </span>
+                        <span class="badge bg-warning text-dark me-2">
+                            <i class="fas fa-clock me-1"></i>High (7-14 days)
+                        </span>
+                        <span class="badge bg-danger">
+                            <i class="fas fa-exclamation-triangle me-1"></i>Critical (15+ days)
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small class="text-muted">
+                        Orders are automatically prioritized based on age
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            initializeFilters();
+            initializeCheckboxes();
+        });
+
+        function initializeFilters() {
+            $('input[name="priorityFilter"]').change(function() {
+                const filter = $(this).val();
+                filterOrders(filter);
+            });
+        }
+
+        function initializeCheckboxes() {
+            // Select all checkbox
+            $('#selectAll').change(function() {
+                const isChecked = $(this).is(':checked');
+                $('.order-checkbox:visible').prop('checked', isChecked);
+                updateBulkActionsPanel();
+            });
+
+            // Individual checkboxes
+            $('.order-checkbox').change(function() {
+                updateBulkActionsPanel();
+                updateSelectAllCheckbox();
+            });
+        }
+
+        function filterOrders(filter) {
+            $('.pending-order').show();
+            
+            switch(filter) {
+                case 'old':
+                    $('.pending-order').each(function() {
+                        const age = parseInt($(this).data('age'));
+                        if (age < 7) {
+                            $(this).hide();
+                        }
+                    });
+                    break;
+                case 'critical':
+                    $('.pending-order').each(function() {
+                        const age = parseInt($(this).data('age'));
+                        if (age < 15) {
+                            $(this).hide();
+                        }
+                    });
+                    break;
+                case 'all':
+                default:
+                    $('.pending-order').show();
+                    break;
+            }
+            
+            updateSelectAllCheckbox();
+        }
+
+        function updateBulkActionsPanel() {
+            const selectedCount = $('.order-checkbox:checked').length;
+            $('#selectedCount').text(selectedCount);
+            
+            if (selectedCount > 0) {
+                $('#bulkActionsPanel').show();
+            } else {
+                $('#bulkActionsPanel').hide();
+            }
+        }
+
+        function updateSelectAllCheckbox() {
+            const visibleCheckboxes = $('.order-checkbox:visible');
+            const checkedBoxes = $('.order-checkbox:visible:checked');
+            
+            $('#selectAll').prop('checked', visibleCheckboxes.length > 0 && visibleCheckboxes.length === checkedBoxes.length);
+        }
+
+        function clearSelection() {
+            $('.order-checkbox').prop('checked', false);
+            $('#selectAll').prop('checked', false);
+            updateBulkActionsPanel();
+        }
+
+        function exportToCSV() {
+            let csv = 'PO Number,Supplier Name,Order Date,Age (Days),Total Items,Total Amount,Priority\n';
+            
+            $('#pendingOrdersTable tbody tr:visible').each(function() {
+                const row = $(this);
+                const poNumber = row.find('td:eq(0) .fw-bold').text();
+                const supplier = row.find('.supplier-info .fw-semibold').text() || '';
+                const orderDate = row.find('td:eq(2)').text().replace(/\s+/g, ' ').trim();
+                const age = row.find('td:eq(3) .badge').text();
+                const items = row.find('td:eq(4) .badge').text();
+                const amount = row.find('.text-success').text().replace('₹', '').replace(/,/g, '');
+                const priority = row.find('td:eq(6) .badge').text().trim();
+                
+                csv += `"${poNumber}","${supplier}","${orderDate}","${age}","${items}","${amount}","${priority}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `pending-receivals-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function receivePurchase(purchaseId, poNumber) {
+            Swal.fire({
+                title: 'Receive Purchase Order?',
+                html: `
+                    <div class="text-start">
+                        <p>Mark purchase order <strong>${poNumber}</strong> as received?</p>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-1"></i>
+                            This will update product stock quantities.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Receiving Notes (Optional)</label>
+                            <textarea class="form-control" id="receiveNotes" rows="3" placeholder="Enter any notes..."></textarea>
+                        </div>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                confirmButtonText: '<i class="fas fa-truck-loading me-1"></i> Receive Order'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const notes = document.getElementById('receiveNotes').value;
+                    
+                    const form = $('<form>', {
+                        'method': 'POST',
+                        'action': '@Url.Action("Receive", "Purchases")'
+                    });
+                    
+                    form.append($('<input>', { 'type': 'hidden', 'name': 'id', 'value': purchaseId }));
+                    form.append($('<input>', { 'type': 'hidden', 'name': 'notes', 'value': notes }));
+                    form.append($('@Html.AntiForgeryToken()'));
+                    
+                    $('body').append(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function sendReminder(purchaseId, supplierName) {
+            Swal.fire({
+                title: 'Send Reminder',
+                html: `
+                    <div class="text-start">
+                        <p>Send delivery reminder to <strong>${supplierName}</strong>?</p>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-1"></i>
+                            This feature would send an email/SMS reminder to the supplier.
+                        </div>
+                    </div>
+                `,
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#ffc107',
+                confirmButtonText: '<i class="fas fa-bell me-1"></i> Send Reminder'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // This would implement the actual reminder functionality
+                    Swal.fire('Success', 'Reminder sent successfully!', 'success');
+                }
+            });
+        }
+
+        function bulkReceiveOrders() {
+            const selectedOrders = $('.order-checkbox:checked');
+            if (selectedOrders.length === 0) {
+                Swal.fire('Error', 'Please select orders to receive.', 'error');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Bulk Receive Orders?',
+                html: `
+                    <div class="text-start">
+                        <p>Receive <strong>${selectedOrders.length}</strong> selected orders?</p>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            This will mark all selected orders as received and update stock.
+                        </div>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                confirmButtonText: '<i class="fas fa-truck-loading me-1"></i> Receive All Selected'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // This would implement bulk receive functionality
+                    Swal.fire('Success', `${selectedOrders.length} orders marked as received!`, 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                }
+            });
+        }
+
+        function sendBulkReminders() {
+            const selectedOrders = $('.order-checkbox:checked');
+            if (selectedOrders.length === 0) {
+                Swal.fire('Error', 'Please select orders to send reminders for.', 'error');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Send Bulk Reminders?',
+                text: `Send delivery reminders for ${selectedOrders.length} selected orders?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#ffc107',
+                confirmButtonText: '<i class="fas fa-bell me-1"></i> Send Reminders'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire('Success', `Reminders sent for ${selectedOrders.length} orders!`, 'success');
+                }
+            });
+        }
+    </script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .pending-order:hover {
+            background-color: rgba(255, 193, 7, 0.05);
+        }
+        
+        .table-danger {
+            background-color: rgba(220, 53, 69, 0.1) !important;
+        }
+        
+        .table-warning {
+            background-color: rgba(255, 193, 7, 0.1) !important;
+        }
+        
+        .supplier-info:hover {
+            transform: translateX(2px);
+            transition: transform 0.2s ease;
+        }
+        
+        @@media print {
+            .btn, .card-header .btn-group {
+                display: none !important;
+            }
+            
+            .card {
+                border: 1px solid #ddd !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+}

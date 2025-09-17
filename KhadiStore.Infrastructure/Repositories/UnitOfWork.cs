@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
 using KhadiStore.Domain.Interfaces;
 using KhadiStore.Infrastructure.Data;
+using KhadiStore.Application.Interfaces;
 
 namespace KhadiStore.Infrastructure.Repositories
 {
@@ -19,6 +20,7 @@ namespace KhadiStore.Infrastructure.Repositories
             Categories = new CategoryRepository(_context);
             Purchases = new PurchaseRepository(_context);
             Returns = new ReturnRepository(_context);
+            PurchaseItems = new PurchaseItemRepository(_context);
         }
 
         public IProductRepository Products { get; }
@@ -28,6 +30,7 @@ namespace KhadiStore.Infrastructure.Repositories
         public ICategoryRepository Categories { get; }
         public IPurchaseRepository Purchases { get; }
         public IReturnRepository Returns { get; }
+        public IPurchaseItemRepository PurchaseItems { get; }
 
         public async Task<int> SaveChangesAsync()
         {

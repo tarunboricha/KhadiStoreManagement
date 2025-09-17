@@ -1,4 +1,6 @@
-﻿namespace KhadiStore.Domain.Interfaces
+﻿using KhadiStore.Application.Interfaces;
+
+namespace KhadiStore.Domain.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {
@@ -10,6 +12,8 @@
         ISaleRepository Sales { get; }
         ISupplierRepository Suppliers { get; }
         IReturnRepository Returns { get; }
+        // NEW: Purchase-related repositories
+        IPurchaseItemRepository PurchaseItems { get; }
 
         // Existing methods (keep these as they are)
         Task BeginTransactionAsync();

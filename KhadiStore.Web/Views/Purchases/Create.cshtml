@@ -1,0 +1,654 @@
+﻿@model KhadiStore.Application.DTOs.CreatePurchaseDto
+@{
+    ViewData["Title"] = "Create New Purchase Order";
+}
+
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="page-title">
+            <i class="fas fa-plus me-2 text-success"></i>
+            Create New Purchase Order
+            <small class="text-muted fs-6 ms-2">| नया खरीद आदेश बनाएं</small>
+        </h1>
+    </div>
+    <div class="col-auto">
+        <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Purchase Orders
+        </a>
+    </div>
+</div>
+
+<form asp-action="Create" method="post" id="purchaseForm" novalidate>
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Supplier Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-truck me-2"></i>Supplier Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="SupplierId" class="form-label required">
+                                    <i class="fas fa-building text-primary me-1"></i>Select Supplier
+                                </label>
+                                <select asp-for="SupplierId" class="form-select" id="supplierSelect">
+                                    <option value="">Choose a supplier...</option>
+                                    @foreach (var supplier in ViewBag.Suppliers as List<SelectListItem>)
+                                    {
+                                        <option value="@supplier.Value" selected=@(supplier.Selected == true)>@supplier.Text</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="SupplierId" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label asp-for="PurchaseDate" class="form-label required">
+                                    <i class="fas fa-calendar text-info me-1"></i>Purchase Date
+                                </label>
+                                <input asp-for="PurchaseDate" type="date" class="form-control">
+                                <span asp-validation-for="PurchaseDate" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Supplier Details Display -->
+                    <div id="supplierDetails" class="mt-3" style="display: none;">
+                        <div class="alert alert-info border-0">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong id="supplierName"></strong>
+                                    <br>
+                                    <small id="supplierContact" class="text-muted"></small>
+                                </div>
+                                <div class="col-md-6">
+                                    <div id="supplierContactInfo" class="text-end"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Selection -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-box me-2"></i>Product Selection
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Select Category</label>
+                            <select class="form-select" id="categorySelect">
+                                <option value="">Choose Category</option>
+                                @foreach (var category in ViewBag.Categories as List<SelectListItem>)
+                                {
+                                    <option value="@category.Value">@category.Text</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Select Product</label>
+                            <select class="form-select" id="productSelect" disabled>
+                                <option value="">First select a category</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Selected Items -->
+                    <div id="selectedItems">
+                        <h6 class="text-muted mb-3">Purchase Items:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="itemsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th width="100px">Quantity</th>
+                                        <th width="120px">Unit Price</th>
+                                        <th width="80px">GST %</th>
+                                        <th width="120px">Line Total</th>
+                                        <th width="80px">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody">
+                                    <tr id="noItemsRow">
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="fas fa-box fa-2x mb-2"></i>
+                                            <br>No items selected. Choose a category and product to start.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-sticky-note me-2"></i>Additional Notes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="Notes" class="form-label">
+                            <i class="fas fa-comment text-info me-1"></i>Purchase Notes (Optional)
+                        </label>
+                        <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Enter any special instructions, delivery requirements, or other notes..."></textarea>
+                        <span asp-validation-for="Notes" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Summary Sidebar -->
+        <div class="col-lg-4">
+            <!-- Purchase Summary -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-calculator me-2"></i>Purchase Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="summary-section">
+                        <div class="d-flex justify-content-between py-2">
+                            <span>Subtotal:</span>
+                            <span id="subtotalDisplay">₹0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-2">
+                            <span>GST Total:</span>
+                            <span id="gstDisplay">₹0.00</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between py-2 fs-5">
+                            <strong class="text-success">Total Amount:</strong>
+                            <strong class="text-success" id="totalDisplay">₹0.00</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purchase Order Details -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-file-alt me-2"></i>Order Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="order-info">
+                        <div class="d-flex justify-content-between py-2 border-bottom">
+                            <span><i class="fas fa-hashtag text-primary me-2"></i>PO Number:</span>
+                            <span class="fw-semibold">Auto-generated</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-2 border-bottom">
+                            <span><i class="fas fa-calendar text-info me-2"></i>Order Date:</span>
+                            <span class="fw-semibold" id="orderDateDisplay">@DateTime.Now.ToString("dd MMM yyyy")</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-2 border-bottom">
+                            <span><i class="fas fa-flag text-warning me-2"></i>Status:</span>
+                            <span class="badge bg-warning text-dark">Ordered</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-2">
+                            <span><i class="fas fa-boxes text-secondary me-2"></i>Total Items:</span>
+                            <span class="fw-semibold" id="itemCountDisplay">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-cogs me-2"></i>Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg" id="createOrderBtn" disabled>
+                            <i class="fas fa-shopping-cart me-1"></i> Create Purchase Order
+                        </button>
+                        <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </a>
+                        <button type="button" class="btn btn-outline-info" onclick="clearItems()">
+                            <i class="fas fa-eraser me-1"></i> Clear All Items
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purchase Guidelines -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0 text-dark">
+                        <i class="fas fa-info-circle me-2"></i>Guidelines
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Select supplier before adding products</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Add at least one product to create order</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>Unit prices can be different from selling price</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <small>GST will be calculated automatically</small>
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-info text-info me-2"></i>
+                            <small>Order status will be "Ordered" initially</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        let selectedItems = [];
+        let itemCounter = 0;
+
+        $(document).ready(function() {
+            initializeEventHandlers();
+            updateTotals();
+        });
+
+        function initializeEventHandlers() {
+            // Supplier selection
+            $('#supplierSelect').change(function() {
+                const supplierId = $(this).val();
+                if (supplierId) {
+                    loadSupplierDetails(supplierId);
+                } else {
+                    $('#supplierDetails').hide();
+                }
+            });
+
+            // Category selection
+            $('#categorySelect').change(function() {
+                loadProductsByCategory($(this).val());
+            });
+
+            // Product selection
+            $('#productSelect').change(function() {
+                if ($(this).val()) {
+                    addProductToPurchase($(this).val());
+                }
+            });
+
+            // Purchase date change
+            $('#PurchaseDate').change(function() {
+                const date = new Date($(this).val());
+                $('#orderDateDisplay').text(date.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                }));
+            });
+
+            // Form submission
+            $('#purchaseForm').submit(function(e) {
+                if (selectedItems.length === 0) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'No Items Selected',
+                        text: 'Please add at least one item to create a purchase order.',
+                        icon: 'warning',
+                        confirmButtonText: 'OK',
+                        confirmButtonColor: '#FF6B35'
+                    });
+                    return false;
+                }
+                updateHiddenFields();
+            });
+        }
+
+        function loadSupplierDetails(supplierId) {
+            $.get('@Url.Action("GetSupplierDetails")', { supplierId: supplierId })
+                .done(function(supplier) {
+                    if (supplier) {
+                        $('#supplierName').text(supplier.name);
+                        $('#supplierContact').text(supplier.contactPerson ? `Contact: ${supplier.contactPerson}` : '');
+
+                        let contactInfo = '';
+                        if (supplier.phone) {
+                            contactInfo += `<i class="fas fa-phone text-success me-1"></i> ${supplier.phone}`;
+                        }
+                        if (supplier.email) {
+                            if (contactInfo) contactInfo += '<br>';
+                            contactInfo += `<i class="fas fa-envelope text-info me-1"></i> ${supplier.email}`;
+                        }
+                        $('#supplierContactInfo').html(contactInfo);
+
+                        $('#supplierDetails').show();
+                    }
+                })
+                .fail(function() {
+                    $('#supplierDetails').hide();
+                });
+        }
+
+        function loadProductsByCategory(categoryId) {
+            if (!categoryId) {
+                $('#productSelect').prop('disabled', true).html('<option value="">First select a category</option>');
+                return;
+            }
+
+            $.get('@Url.Action("GetProductsByCategory")', { categoryId: categoryId })
+                .done(function(products) {
+                    let options = '<option value="">Select Product</option>';
+                    products.forEach(function(product) {
+                        options += `<option value="${product.id}" data-price="${product.price}" data-gst="${product.gstRate}" data-stock="${product.stock}">
+                                   ${product.name} - ₹${product.price} (Stock: ${product.stock})
+                                   </option>`;
+                    });
+                    $('#productSelect').prop('disabled', false).html(options);
+                })
+                .fail(function() {
+                    Swal.fire('Error', 'Failed to load products. Please try again.', 'error');
+                });
+        }
+
+        function addProductToPurchase(productId) {
+            const productOption = $(`#productSelect option[value="${productId}"]`);
+            const productData = {
+                id: parseInt(productId),
+                name: productOption.text().split(' - ')[0],
+                price: parseFloat(productOption.data('price')),
+                gst: parseFloat(productOption.data('gst')),
+                stock: parseInt(productOption.data('stock'))
+            };
+
+            // Check if product already exists
+            const existingItem = selectedItems.find(item => item.productId === productData.id);
+            if (existingItem) {
+                Swal.fire({
+                    title: 'Product Already Added',
+                    text: 'This product is already in the purchase order. Please modify the quantity in the table.',
+                    icon: 'info',
+                    confirmButtonText: 'OK'
+                });
+                $('#productSelect').val('');
+                return;
+            }
+
+            // Show unit price input dialog
+            Swal.fire({
+                title: 'Add Product to Purchase',
+                html: `
+                    <div class="text-start">
+                        <p><strong>Product:</strong> ${productData.name}</p>
+                        <p><strong>Current Selling Price:</strong> ₹${productData.price}</p>
+                        <div class="mb-3">
+                            <label class="form-label">Purchase Quantity</label>
+                            <input type="number" class="form-control" id="purchaseQuantity" value="1" min="1" step="1">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Purchase Unit Price</label>
+                            <input type="number" class="form-control" id="purchasePrice" value="${productData.price}" min="0" step="0.01">
+                            <small class="text-muted">This can be different from selling price</small>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Add to Purchase',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#28a745',
+                preConfirm: () => {
+                    const quantity = parseInt(document.getElementById('purchaseQuantity').value);
+                    const unitPrice = parseFloat(document.getElementById('purchasePrice').value);
+
+                    if (!quantity || quantity < 1) {
+                        Swal.showValidationMessage('Please enter a valid quantity');
+                        return false;
+                    }
+
+                    if (!unitPrice || unitPrice < 0) {
+                        Swal.showValidationMessage('Please enter a valid unit price');
+                        return false;
+                    }
+
+                    return { quantity: quantity, unitPrice: unitPrice };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const item = {
+                        index: itemCounter++,
+                        productId: productData.id,
+                        productName: productData.name,
+                        quantity: result.value.quantity,
+                        unitPrice: result.value.unitPrice,
+                        gstRate: productData.gst
+                    };
+
+                    selectedItems.push(item);
+                    addItemToTable(item);
+                    updateTotals();
+
+                    // Reset selections
+                    $('#productSelect').val('');
+                    $('#noItemsRow').hide();
+                }
+            });
+        }
+
+        function addItemToTable(item) {
+            const lineTotal = (item.unitPrice * item.quantity);
+            const gstAmount = lineTotal * (item.gstRate / 100);
+            const totalAmount = lineTotal + gstAmount;
+
+            const row = `
+                <tr data-index="${item.index}">
+                    <td>
+                        <div class="fw-semibold">${item.productName}</div>
+                        <small class="text-muted">ID: ${item.productId}</small>
+                    </td>
+                    <td>
+                        <input type="number" class="form-control quantity-input" value="${item.quantity}"
+                               min="1" step="1" data-index="${item.index}">
+                    </td>
+                    <td>
+                        <input type="number" class="form-control price-input" value="${item.unitPrice}"
+                               min="0" step="0.01" data-index="${item.index}">
+                    </td>
+                    <td class="text-center">${item.gstRate}%</td>
+                    <td class="text-end line-total">₹${totalAmount.toFixed(2)}</td>
+                    <td>
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-item" data-index="${item.index}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+
+            $('#itemsTableBody').append(row);
+
+            // Event handlers for new row
+            $(`.quantity-input[data-index="${item.index}"]`).on('input', function() {
+                updateItemQuantity(item.index, parseInt($(this).val()));
+            });
+
+            $(`.price-input[data-index="${item.index}"]`).on('input', function() {
+                updateItemPrice(item.index, parseFloat($(this).val()));
+            });
+
+            $(`.remove-item[data-index="${item.index}"]`).click(function() {
+                removeItem(item.index);
+            });
+        }
+
+        function updateItemQuantity(index, quantity) {
+            const item = selectedItems.find(i => i.index === index);
+            if (item) {
+                item.quantity = quantity;
+                calculateLineTotal(item);
+                updateTotals();
+            }
+        }
+
+        function updateItemPrice(index, unitPrice) {
+            const item = selectedItems.find(i => i.index === index);
+            if (item) {
+                item.unitPrice = unitPrice;
+                calculateLineTotal(item);
+                updateTotals();
+            }
+        }
+
+        function calculateLineTotal(item) {
+            const lineTotal = (item.unitPrice * item.quantity);
+            const gstAmount = lineTotal * (item.gstRate / 100);
+            const totalAmount = lineTotal + gstAmount;
+            $(`tr[data-index="${item.index}"] .line-total`).text(`₹${totalAmount.toFixed(2)}`);
+        }
+
+        function removeItem(index) {
+            selectedItems = selectedItems.filter(item => item.index !== index);
+            $(`tr[data-index="${index}"]`).remove();
+
+            if (selectedItems.length === 0) {
+                $('#noItemsRow').show();
+                $('#createOrderBtn').prop('disabled', true);
+            }
+
+            updateTotals();
+        }
+
+        function updateTotals() {
+            let subtotal = 0;
+            let gstTotal = 0;
+
+            selectedItems.forEach(function(item) {
+                const itemSubtotal = item.unitPrice * item.quantity;
+                const itemGst = itemSubtotal * (item.gstRate / 100);
+
+                subtotal += itemSubtotal;
+                gstTotal += itemGst;
+            });
+
+            const totalAmount = subtotal + gstTotal;
+
+            // Update display
+            $('#subtotalDisplay').text(`₹${subtotal.toFixed(2)}`);
+            $('#gstDisplay').text(`₹${gstTotal.toFixed(2)}`);
+            $('#totalDisplay').text(`₹${totalAmount.toFixed(2)}`);
+            $('#itemCountDisplay').text(selectedItems.length);
+
+            // Enable/disable submit button
+            $('#createOrderBtn').prop('disabled', selectedItems.length === 0);
+        }
+
+        function updateHiddenFields() {
+            // Clear existing hidden fields
+            $('input[name^="PurchaseItems"]').remove();
+
+            // Add current items as hidden fields
+            selectedItems.forEach(function(item, index) {
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `PurchaseItems[${index}].ProductId`,
+                    value: item.productId
+                }).appendTo('#purchaseForm');
+
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `PurchaseItems[${index}].Quantity`,
+                    value: item.quantity
+                }).appendTo('#purchaseForm');
+
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `PurchaseItems[${index}].UnitPrice`,
+                    value: item.unitPrice
+                }).appendTo('#purchaseForm');
+            });
+        }
+
+        function clearItems() {
+            if (selectedItems.length === 0) return;
+
+            Swal.fire({
+                title: 'Clear All Items?',
+                text: 'This will remove all items from the purchase order.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, Clear All',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    selectedItems = [];
+                    $('#itemsTableBody').find('tr[data-index]').remove();
+                    $('#noItemsRow').show();
+                    updateTotals();
+                }
+            });
+        }
+    </script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .required::after {
+            content: " *";
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #FF6B35;
+            box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+        }
+
+        .summary-section .border-bottom:last-child {
+            border-bottom: none !important;
+        }
+
+        .order-info .border-bottom:last-child {
+            border-bottom: none !important;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            background-color: #f8f9fa;
+        }
+
+        .quantity-input, .price-input {
+            font-size: 0.875rem;
+            text-align: center;
+        }
+
+        .line-total {
+            font-weight: 600;
+            color: #28a745;
+        }
+    </style>
+}

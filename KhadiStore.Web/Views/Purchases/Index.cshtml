@@ -1,0 +1,637 @@
+﻿@model IEnumerable<KhadiStore.Application.DTOs.PurchaseDto>
+@{
+    ViewData["Title"] = "Purchase Orders";
+}
+
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="page-title">
+            <i class="fas fa-shopping-cart me-2 text-info"></i>
+            Purchase Orders
+            <small class="text-muted fs-6 ms-2">| खरीद आदेश</small>
+        </h1>
+    </div>
+    <div class="col-auto">
+        <div class="btn-group">
+            <a href="@Url.Action("Create")" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-1"></i> New Purchase Order
+            </a>
+            <a href="@Url.Action("PendingReceivalsReport")" class="btn btn-warning">
+                <i class="fas fa-clock me-1"></i> Pending Receivals
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+@{
+    var totalPurchases = Model.Sum(p => p.TotalAmount);
+    var totalOrders = Model.Count();
+    var avgOrderValue = totalOrders > 0 ? totalPurchases / totalOrders : 0;
+    var pendingOrders = Model.Count(p => p.Status == "Ordered");
+    var receivedOrders = Model.Count(p => p.Status == "Received");
+    var todaysPurchases = Model.Where(p => p.PurchaseDate.Date == DateTime.Today).Sum(p => p.TotalAmount);
+}
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body">
+                <i class="fas fa-rupee-sign fa-2x text-success mb-2"></i>
+                <h4 class="text-success">₹@totalPurchases.ToString("N0")</h4>
+                <p class="mb-0">Total Purchase Value</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body">
+                <i class="fas fa-shopping-cart fa-2x text-primary mb-2"></i>
+                <h4 class="text-primary">@totalOrders</h4>
+                <p class="mb-0">Total Orders</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body">
+                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                <h4 class="text-warning">@pendingOrders</h4>
+                <p class="mb-0">Pending Orders</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-0 shadow-sm">
+            <div class="card-body">
+                <i class="fas fa-check-circle fa-2x text-info mb-2"></i>
+                <h4 class="text-info">@receivedOrders</h4>
+                <p class="mb-0">Received Orders</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label">From Date</label>
+                <input type="date" class="form-control" name="startDate" value="@ViewBag.StartDate?.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">To Date</label>
+                <input type="date" class="form-control" name="endDate" value="@ViewBag.EndDate?.ToString("yyyy-MM-dd")">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Supplier</label>
+                <select class="form-select" name="supplierId">
+                    <option value="">All Suppliers</option>
+                    @foreach (var supplier in ViewBag.Suppliers as List<SelectListItem>)
+                    {
+                        <option value="@supplier.Value" selected=@(supplier.Selected == true)>@supplier.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+                    <option value="">All Status</option>
+                    <option value="Ordered" selected=@(ViewBag.Status == "Ordered")>Ordered</option>
+                    <option value="Received" selected=@(ViewBag.Status == "Received")>Received</option>
+                    <option value="Cancelled" selected=@(ViewBag.Status == "Cancelled")>Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">PO Number</label>
+                <input type="text" class="form-control" name="purchaseOrderNumber" value="@ViewBag.PurchaseOrderNumber" placeholder="Search PO...">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+        <div class="row mt-2">
+            <div class="col-md-8">
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('today')">Today</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('week')">This Week</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('month')">This Month</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange('clear')">Clear</button>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="@Url.Action("Index")" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-times me-1"></i> Clear All Filters
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Orders Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-white">
+                <i class="fas fa-list me-2"></i>
+                Purchase Orders (@ViewBag.TotalItems records)
+            </h5>
+            <div>
+                <button class="btn btn-light btn-sm" onclick="exportToCSV()">
+                    <i class="fas fa-download me-1"></i> Export CSV
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="purchasesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 15%">PO Details</th>
+                            <th style="width: 20%">Supplier</th>
+                            <th style="width: 15%">Date & Time</th>
+                            <th class="text-center" style="width: 8%">Items</th>
+                            <th class="text-end" style="width: 12%">Amount</th>
+                            <th class="text-center" style="width: 10%">Status</th>
+                            <th class="text-center" style="width: 15%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var purchase in Model.OrderByDescending(p => p.PurchaseDate))
+                        {
+                            <tr class="@(purchase.Status == "Cancelled" ? "table-secondary" : "")">
+                                <td>
+                                    <div class="purchase-info">
+                                        <div class="fw-bold text-dark">@purchase.PurchaseOrderNumber</div>
+                                        <small class="text-muted">ID: @purchase.Id</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="supplier-info">
+                                        <div class="fw-semibold">@purchase.SupplierName</div>
+                                        @if (!string.IsNullOrEmpty(purchase.SupplierPhone))
+                                        {
+                                            <small class="text-muted">
+                                                <i class="fas fa-phone me-1"></i>@purchase.SupplierPhone
+                                            </small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="fw-semibold">@purchase.PurchaseDate.ToString("dd MMM yyyy")</div>
+                                        <small class="text-muted">@purchase.PurchaseDate.ToString("hh:mm tt")</small>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border">@purchase.TotalItems</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="fw-bold text-success">₹@purchase.TotalAmount.ToString("N2")</div>
+                                    @if (purchase.GSTAmount > 0)
+                                    {
+                                        <small class="text-muted">inc. GST ₹@purchase.GSTAmount.ToString("N0")</small>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @switch (purchase.Status)
+                                    {
+                                        case "Ordered":
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-clock me-1"></i>Ordered
+                                            </span>
+                                            break;
+                                        case "Received":
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Received
+                                            </span>
+                                            break;
+                                        case "Cancelled":
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Cancelled
+                                            </span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-secondary">@purchase.Status</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="@Url.Action("Details", new { id = purchase.Id })"
+                                           class="btn btn-outline-primary"
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+
+                                        @if (purchase.CanReceive)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-outline-success"
+                                                    onclick="receivePurchase(@purchase.Id, '@purchase.PurchaseOrderNumber')"
+                                                    title="Receive Purchase">
+                                                <i class="fas fa-truck-loading"></i>
+                                            </button>
+                                        }
+
+                                        @if (purchase.CanCancel)
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-outline-danger"
+                                                    onclick="cancelPurchase(@purchase.Id, '@purchase.PurchaseOrderNumber')"
+                                                    title="Cancel Purchase">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                        }
+
+                                        @if (purchase.Status != "Received")
+                                        {
+                                            <button type="button"
+                                                    class="btn btn-outline-secondary"
+                                                    onclick="deletePurchase(@purchase.Id, '@purchase.PurchaseOrderNumber')"
+                                                    title="Delete Purchase">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="p-5 text-center text-muted">
+                <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                <h5>No Purchase Orders Found</h5>
+                <p>No purchase orders match your current filters, or no orders have been created yet.</p>
+                <a href="@Url.Action("Create")" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Create First Purchase Order
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Pagination Controls (same as suppliers) -->
+@if (ViewBag.TotalPages > 1)
+{
+    <div class="card mt-3 border-0 shadow-sm">
+        <div class="card-body py-2">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">
+                        Showing @((ViewBag.CurrentPage - 1) * ViewBag.PageSize + 1) to
+                        @Math.Min(ViewBag.CurrentPage * ViewBag.PageSize, ViewBag.TotalItems)
+                        of @ViewBag.TotalItems entries
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <nav aria-label="Purchases pagination">
+                        <ul class="pagination justify-content-end mb-0">
+                            @if (ViewBag.HasPreviousPage)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@GetPageUrl(ViewBag.CurrentPage - 1)">
+                                        <i class="fas fa-angle-left"></i> Previous
+                                    </a>
+                                </li>
+                            }
+
+                            @{
+                                int startPage = Math.Max(1, ViewBag.CurrentPage - 2);
+                                int endPage = Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2);
+                            }
+
+                            @for (int i = startPage; i <= endPage; i++)
+                            {
+                                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="@GetPageUrl(i)">@i</a>
+                                </li>
+                            }
+
+                            @if (ViewBag.HasNextPage)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="@GetPageUrl(ViewBag.CurrentPage + 1)">
+                                        Next <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.Any())
+{
+    <!-- Summary Cards -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Status Breakdown</h6>
+                </div>
+                <div class="card-body">
+                    @{
+                        var statusGroups = Model.GroupBy(p => p.Status).Select(g => new { Status = g.Key, Count = g.Count(), Amount = g.Sum(p => p.TotalAmount) });
+                    }
+                    @foreach (var group in statusGroups.OrderByDescending(g => g.Amount))
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>@group.Status (@group.Count orders)</span>
+                            <strong>₹@group.Amount.ToString("N0")</strong>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Purchase Insights</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Largest Order</span>
+                        <strong>₹@Model.Max(p => p.TotalAmount).ToString("N0")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Smallest Order</span>
+                        <strong>₹@Model.Min(p => p.TotalAmount).ToString("N0")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Average Order Size</span>
+                        <strong>₹@avgOrderValue.ToString("N0")</strong>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Today's Purchases</span>
+                        <strong class="text-success">₹@todaysPurchases.ToString("N0")</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@{
+    string GetPageUrl(int pageNumber)
+    {
+        var queryParams = new List<string>();
+
+        queryParams.Add($"page={pageNumber}");
+        queryParams.Add($"pageSize={ViewBag.PageSize}");
+
+        if (ViewBag.StartDate != null)
+            queryParams.Add($"startDate={ViewBag.StartDate:yyyy-MM-dd}");
+
+        if (ViewBag.EndDate != null)
+            queryParams.Add($"endDate={ViewBag.EndDate:yyyy-MM-dd}");
+
+        if (ViewBag.SupplierId != null)
+            queryParams.Add($"supplierId={ViewBag.SupplierId}");
+
+        if (!string.IsNullOrEmpty(ViewBag.Status?.ToString()))
+            queryParams.Add($"status={ViewBag.Status}");
+
+        if (!string.IsNullOrEmpty(ViewBag.PurchaseOrderNumber?.ToString()))
+            queryParams.Add($"purchaseOrderNumber={ViewBag.PurchaseOrderNumber}");
+
+        return Url.Action("Index") + "?" + string.Join("&", queryParams);
+    }
+}
+
+@section Scripts {
+    <script>
+        function setDateRange(range) {
+            const today = new Date();
+            let startDate, endDate;
+
+            switch(range) {
+                case 'today':
+                    startDate = endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'week':
+                    const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+                    startDate = weekStart.toISOString().split('T')[0];
+                    endDate = new Date().toISOString().split('T')[0];
+                    break;
+                case 'month':
+                    startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                    endDate = new Date().toISOString().split('T')[0];
+                    break;
+                case 'clear':
+                    startDate = endDate = '';
+                    break;
+            }
+
+            $('input[name="startDate"]').val(startDate);
+            $('input[name="endDate"]').val(endDate);
+        }
+
+        function exportToCSV() {
+            let csv = 'PO Number,Supplier Name,Purchase Date,Total Items,SubTotal,GST Amount,Total Amount,Status\n';
+
+            $('#purchasesTable tbody tr').each(function() {
+                const row = $(this);
+                const poNumber = row.find('.purchase-info .fw-bold').text();
+                const supplierName = row.find('.supplier-info .fw-semibold').text() || '';
+                const date = row.find('td:eq(2)').text().replace(/\s+/g, ' ').trim();
+                const items = row.find('.badge').text();
+                const amount = row.find('.text-success').text().replace('₹', '').replace(/,/g, '');
+                const status = row.find('.badge:last').text().trim();
+
+                csv += `"${poNumber}","${supplierName}","${date}","${items}","","","${amount}","${status}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `purchases-export-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function receivePurchase(purchaseId, poNumber) {
+            Swal.fire({
+                title: 'Receive Purchase Order?',
+                html: `
+                    <div class="text-start">
+                        <p>Mark purchase order <strong>${poNumber}</strong> as received?</p>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-1"></i>
+                            This will update product stock quantities and cannot be undone easily.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Receiving Notes (Optional)</label>
+                            <textarea class="form-control" id="receiveNotes" rows="3" placeholder="Enter any notes about the received items..."></textarea>
+                        </div>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-truck-loading me-1"></i> Receive Order',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const notes = document.getElementById('receiveNotes').value;
+
+                    // Submit form
+                    const form = $('<form>', {
+                        'method': 'POST',
+                        'action': '@Url.Action("Receive")'
+                    });
+
+                    form.append($('<input>', { 'type': 'hidden', 'name': 'id', 'value': purchaseId }));
+                    form.append($('<input>', { 'type': 'hidden', 'name': 'notes', 'value': notes }));
+                    form.append($('@Html.AntiForgeryToken()'));
+
+                    $('body').append(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function cancelPurchase(purchaseId, poNumber) {
+            Swal.fire({
+                title: 'Cancel Purchase Order?',
+                html: `
+                    <div class="text-start">
+                        <p>Cancel purchase order <strong>${poNumber}</strong>?</p>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            This action can be reversed later if needed.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cancellation Reason</label>
+                            <textarea class="form-control" id="cancelReason" rows="3" placeholder="Enter reason for cancellation..." required></textarea>
+                        </div>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-ban me-1"></i> Cancel Order',
+                cancelButtonText: 'Keep Order'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const reason = document.getElementById('cancelReason').value;
+                    if (!reason.trim()) {
+                        Swal.fire('Error', 'Please provide a reason for cancellation.', 'error');
+                        return;
+                    }
+
+                    // Submit form
+                    const form = $('<form>', {
+                        'method': 'POST',
+                        'action': '@Url.Action("Cancel")'
+                    });
+
+                    form.append($('<input>', { 'type': 'hidden', 'name': 'id', 'value': purchaseId }));
+                    form.append($('<input>', { 'type': 'hidden', 'name': 'reason', 'value': reason }));
+                    form.append($('@Html.AntiForgeryToken()'));
+
+                    $('body').append(form);
+                    form.submit();
+                }
+            });
+        }
+
+        function deletePurchase(purchaseId, poNumber) {
+            Swal.fire({
+                title: 'Delete Purchase Order?',
+                html: `
+                    <div class="text-start">
+                        <p>Permanently delete purchase order <strong>${poNumber}</strong>?</p>
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>Warning:</strong> This action cannot be undone and will permanently remove all order data.
+                        </div>
+                    </div>
+                `,
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-trash me-1"></i> Delete Permanently',
+                cancelButtonText: 'Keep Order'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit form
+                    const form = $('<form>', {
+                        'method': 'POST',
+                        'action': '@Url.Action("Delete")'
+                    });
+
+                    form.append($('<input>', { 'type': 'hidden', 'name': 'id', 'value': purchaseId }));
+                    form.append($('@Html.AntiForgeryToken()'));
+
+                    $('body').append(form);
+                    form.submit();
+                }
+            });
+        }
+
+        // Initialize page
+        $(document).ready(function() {
+            // Add animations
+            $('.card').each(function(i) {
+                $(this).css('opacity', '0').animate({
+                    opacity: 1
+                }, 300 + (i * 100));
+            });
+
+            // Initialize tooltips
+            $('[title]').tooltip();
+        });
+    </script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .purchase-info:hover, .supplier-info:hover {
+            transform: translateX(2px);
+            transition: transform 0.2s ease;
+        }
+
+        .pagination .page-link {
+            border-radius: 6px;
+            margin: 0 2px;
+            color: #17a2b8;
+            border-color: #17a2b8;
+        }
+
+            .pagination .page-link:hover {
+                background-color: #E6F7FF;
+                border-color: #17a2b8;
+                color: #17a2b8;
+            }
+
+        .pagination .page-item.active .page-link {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(23, 162, 184, 0.05);
+        }
+    </style>
+}
